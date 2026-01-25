@@ -1,13 +1,26 @@
 import { NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import prisma from '@/lib/db';
 
 export async function GET() {
   try {
-    const client = await pool.connect();
-    const result = await client.query('SELECT NOW()');
-    client.release();
-    return NextResponse.json({ status: 'success', time: result.rows[0].now });
+    // Test the database connection
+    const result: any = await prisma.$queryRaw`SELECT NOW()`;
+    
+    // Also try to count specialists to ensure schema is pushed
+    const count = await prisma.specialist.count();
+    
+    return NextResponse.json({ 
+      status: 'success', 
+      time: result[0].now,
+      tables_exist: true,
+      specialists_count: count
+    });
   } catch (error: any) {
-    return NextResponse.json({ status: 'error', message: error.message }, { status: 500 });
+    console.error('Database connection error:', error);
+    return NextResponse.json({ 
+      status: 'error', 
+      message: error.message,
+      stack: error.stack 
+    }, { status: 500 });
   }
 }

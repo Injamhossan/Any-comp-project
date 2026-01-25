@@ -1,11 +1,9 @@
-import { Pool } from 'pg';
+import { PrismaClient } from '@prisma/client'
 
-const pool = new Pool({
-  user: process.env.POSTGRES_USER,
-  password: process.env.POSTGRES_PASSWORD,
-  host: process.env.POSTGRES_HOST,
-  port: parseInt(process.env.POSTGRES_PORT || '5432'),
-  database: process.env.POSTGRES_DB,
-});
+const globalForPrisma = global as unknown as { prisma: PrismaClient }
 
-export default pool;
+export const prisma = globalForPrisma.prisma || new PrismaClient()
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+
+export default prisma

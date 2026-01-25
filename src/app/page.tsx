@@ -1,65 +1,177 @@
-import Image from "next/image";
+import React from "react";
+import Link from "next/link";
+import Navbar from "@/components/Navbar";
+import SpecialistCard from "@/components/SpecialistCard";
+import { ChevronRight, Home, SlidersHorizontal, ChevronDown } from "lucide-react";
 
-export default function Home() {
+// Mock data to match the screenshot
+const SPECIALISTS = [
+  {
+    id: 1,
+    name: "Adam Low",
+    role: "Company Secretary",
+    description: "Register your Company with the best Company Secretary in KL",
+    price: "RM 1,600",
+    imageSrc: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=800", // Business man
+    avatarSrc: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=100",
+  },
+  {
+    id: 2,
+    name: "Jessica Law",
+    role: "Company Secretary",
+    description: "Register your Company with the best Company Secretary in KL",
+    price: "RM 1,600",
+    imageSrc: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=800", // Business woman
+    avatarSrc: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=100",
+  },
+  {
+    id: 3,
+    name: "Stacey Lim",
+    role: "Company Secretary",
+    description: "Register your Company with the best Company Secretary in KL",
+    price: "RM 1,600",
+    imageSrc: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=800", // Another woman
+    avatarSrc: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=100",
+  },
+  {
+    id: 4,
+    name: "Stacey Lim",
+    role: "Company Secretary",
+    description: "Register your Company with the best Company Secretary in KL",
+    price: "RM 1,600",
+    imageSrc: "https://images.unsplash.com/photo-1598550874175-6e9f1a0e8d39?auto=format&fit=crop&q=80&w=800", // Another woman professional
+    avatarSrc: "https://images.unsplash.com/photo-1598550874175-6e9f1a0e8d39?auto=format&fit=crop&q=80&w=100",
+  },
+  {
+    id: 5,
+    name: "Sarah Wong",
+    role: "Company Secretary",
+    description: "Register your Company with the best Company Secretary in KL",
+    price: "RM 1,600",
+    imageSrc: "https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?auto=format&fit=crop&q=80&w=800", // Woman glasses
+    avatarSrc: "https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?auto=format&fit=crop&q=80&w=100",
+  },
+  {
+    id: 6,
+    name: "Siddesh A/L",
+    role: "Company Secretary",
+    description: "Register your Company with the best Company Secretary in KL",
+    price: "RM 1,600",
+    imageSrc: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=800", // Man yellow bg
+    avatarSrc: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=100",
+  },
+  {
+    id: 7,
+    name: "Siti Hisham",
+    role: "Company Secretary",
+    description: "Register your Company with the best Company Secretary in KL",
+    price: "RM 1,600",
+    imageSrc: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&q=80&w=800", // Hijab
+    avatarSrc: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&q=80&w=100",
+  },
+  {
+    id: 8,
+    name: "Alia Marissa",
+    role: "Company Secretary",
+    description: "Register your Company with the best Company Secretary in KL",
+    price: "RM 1,600",
+    imageSrc: "https://images.unsplash.com/photo-1573166368351-b7033ddc536c?auto=format&fit=crop&q=80&w=800", // Hijab handshake
+    avatarSrc: "https://images.unsplash.com/photo-1573166368351-b7033ddc536c?auto=format&fit=crop&q=80&w=100",
+  },
+  {
+    id: 9,
+    name: "Sarah Wong",
+    role: "Company Secretary",
+    description: "Register your Company with the best Company Secretary in KL",
+    price: "RM 1,600",
+    imageSrc: "https://images.unsplash.com/photo-1554196344-32690c8dd76c?auto=format&fit=crop&q=80&w=800", // Office laptop
+    avatarSrc: "https://images.unsplash.com/photo-1554196344-32690c8dd76c?auto=format&fit=crop&q=80&w=100",
+  },
+  {
+    id: 10,
+    name: "John Doe",
+    role: "Company Secretary",
+    description: "Register your Company with the best Company Secretary in KL",
+    price: "RM 1,600",
+    imageSrc: "https://images.unsplash.com/photo-1556157382-97eda2d62296?auto=format&fit=crop&q=80&w=800", // Man glasses
+    avatarSrc: "https://images.unsplash.com/photo-1556157382-97eda2d62296?auto=format&fit=crop&q=80&w=100",
+  },
+  {
+    id: 11,
+    name: "Jane Smith",
+    role: "Company Secretary",
+    description: "Register your Company with the best Company Secretary in KL",
+    price: "RM 1,600",
+    imageSrc: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=800", // Meeting
+    avatarSrc: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=100",
+  },
+  {
+    id: 12,
+    name: "Devid Kumar",
+    role: "Company Secretary",
+    description: "Register your Company with the best Company Secretary in KL",
+    price: "RM 1,600",
+    imageSrc: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=800", // Man suit
+    avatarSrc: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=100",
+  }
+];
+
+export default function Page() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen bg-white text-gray-900 font-sans">
+      <Navbar />
+
+      <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-2 text-xs text-gray-500 mb-6">
+          <Link href="/" className="hover:text-black">
+             <Home className="h-3 w-3" />
+          </Link>
+          <ChevronRight className="h-3 w-3" />
+          <Link href="#" className="hover:text-black">Specialists</Link>
+          <ChevronRight className="h-3 w-3" />
+          <span className="text-gray-900 font-medium">Register a New Company</span>
+        </nav>
+
+        {/* Heading */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            Register a New Company
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mt-2 text-lg text-gray-500">
+            Get Your Company Registered with a Trusted Specialists
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+
+        {/* Filters */}
+        <div className="flex items-center gap-3 mb-8">
+          <button className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:border-gray-300 hover:bg-gray-50">
+            Price
+            <ChevronDown className="h-3 w-3 text-gray-400" />
+          </button>
+          <button className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:border-gray-300 hover:bg-gray-50">
+            Sort by
+            <ChevronDown className="h-3 w-3 text-gray-400" />
+          </button>
+        </div>
+
+        {/* Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {SPECIALISTS.map((specialist) => (
+            <SpecialistCard
+              key={specialist.id}
+              imageSrc={specialist.imageSrc}
+              avatarSrc={specialist.avatarSrc}
+              name={specialist.name}
+              role={specialist.role}
+              description={specialist.description}
+              price={specialist.price}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          ))}
         </div>
       </main>
     </div>
   );
 }
+
+

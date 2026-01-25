@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "@/style/globals.css";
+import { AuthProvider } from "@/context/AuthContext";
 
 const proxima = localFont({
   src: "./assets/fonts/Proxima_Nova.ttf",
@@ -27,9 +28,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
+        suppressHydrationWarning
         className={`${proxima.variable} ${redhat.variable} antialiased`}
       >
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

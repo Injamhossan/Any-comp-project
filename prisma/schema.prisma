@@ -1,0 +1,130 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums based on the schema
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+enum MimeType {
+  // Common image types
+  IMAGE_JPEG
+  IMAGE_PNG
+  IMAGE_WEBP
+  // Common video types
+  VIDEO_MP4
+  // Common document types
+  APPLICATION_PDF
+  // Add others as needed
+}
+
+enum TierName {
+  FREE
+  BASIC
+  PREMIUM
+  ENTERPRISE
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SPECIALIST
+}
+
+model Specialist {
+  id                      String             @id @default(uuid()) @db.Uuid
+  average_rating          Decimal?           @default(0.0) @db.Decimal(3, 2)
+  is_draft                Boolean            @default(true)
+  total_number_of_ratings Int                @default(0)
+  title                   String
+  slug                    String             @unique
+  description             String             @db.Text
+  base_price              Decimal            @db.Decimal(10, 2)
+  platform_fee            Decimal            @db.Decimal(10, 2)
+  final_price             Decimal            @db.Decimal(10, 2)
+  verification_status     VerificationStatus @default(PENDING)
+  is_verified             Boolean            @default(false)
+  duration_days           Int
+  created_at              DateTime           @default(now())
+  updated_at              DateTime           @updatedAt
+  deleted_at              DateTime?
+
+  media             Media[]
+  service_offerings ServiceOffering[]
+
+  @@map("specialists")
+}
+
+model Media {
+  id            String    @id @default(uuid()) @db.Uuid
+  specialist_id String    @db.Uuid
+  file_name     String
+  file_size     Int
+  display_order Int       @default(0)
+  mime_type     MimeType
+  media_type    MediaType
+  uploaded_at   DateTime  @default(now())
+  deleted_at    DateTime?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  specialist Specialist @relation(fields: [specialist_id], references: [id], onDelete: Cascade)
+
+  @@index([specialist_id])
+  @@map("media")
+}
+
+model PlatformFee {
+  id                      String   @id @default(uuid()) @db.Uuid
+  tier_name               TierName
+  min_value               Int
+  max_value               Int
+  platform_fee_percentage Decimal  @db.Decimal(5, 2)
+  created_at              DateTime @default(now())
+  updated_at              DateTime @updatedAt
+
+  @@map("platform_fee")
+}
+
+model ServiceOfferingMasterList {
+  id          String   @id @default(uuid()) @db.Uuid
+  title       String
+  description String   @db.Text
+  s3_key      String?
+  bucket_name String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  service_offerings ServiceOffering[]
+
+  @@map("service_offerings_master_list")
+}
+
+model ServiceOffering {
+  id                               String   @id @default(uuid()) @db.Uuid
+  specialist_id                    String   @db.Uuid
+  service_offerings_master_list_id String   @db.Uuid
+  created_at                       DateTime @default(now())
+  updated_at                       DateTime @updatedAt
+
+  specialist       Specialist                @relation(fields: [specialist_id], references: [id], onDelete: Cascade)
+  master_list_item ServiceOfferingMasterList @relation(fields: [service_offerings_master_list_id], references: [id], onDelete: Cascade)
+
+  @@index([specialist_id])
+  @@index([service_offerings_master_list_id])
+  @@map("service_offerings")
+}
