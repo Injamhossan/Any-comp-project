@@ -42,7 +42,7 @@ export default function Navbar() {
               href="/register-company"
               className="text-sm font-medium text-gray-600 hover:text-black"
             >
-              Register a company
+              Start Incorporation
             </Link>
             <Link
               href="/appoint-secretary"
@@ -119,7 +119,7 @@ export default function Navbar() {
                             <p className="text-sm font-medium truncate">{user.displayName || "User"}</p>
                             <p className="text-xs text-gray-500 truncate">{user.email}</p>
                         </div>
-                        {user.email === "admin@anycomp.com" && (
+                        {user.email === "admin@anycomp.com" ? (
                           <Link
                             href="/admin"
                             className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
@@ -127,6 +127,15 @@ export default function Navbar() {
                           >
                             <LayoutDashboard className="h-4 w-4" />
                             Admin Dashboard
+                          </Link>
+                        ) : (
+                          <Link
+                            href="/dashboard"
+                            className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                            onClick={() => setIsProfileOpen(false)}
+                          >
+                            <LayoutDashboard className="h-4 w-4" />
+                            Dashboard
                           </Link>
                         )}
                         <button
@@ -152,7 +161,7 @@ export default function Navbar() {
                     href="/register"
                     className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white hover:bg-black/80"
                   >
-                    Register
+                    Sign Up
                   </Link>
                 </div>
               )

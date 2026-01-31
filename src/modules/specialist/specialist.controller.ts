@@ -39,12 +39,20 @@ export const update = async (req: NextRequest, { params }: { params: Promise<{ i
   try {
     const { id } = await params;
     const body = await req.json();
-    console.log("Update Body:", JSON.stringify(body, null, 2));
+    
+    console.log(`[Backend-Update] Updating Specialist ID: ${id}`);
+    console.log(`[Backend-Update] Payload:`, JSON.stringify(body, null, 2));
+
+    if (!id) {
+        throw new Error("Missing ID Parameter");
+    }
+
     const specialist = await updateSpecialist(id, body);
     return NextResponse.json({ success: true, data: specialist }, { status: 200 });
   } catch (error: any) {
-    console.error("Update Error Full:", error);
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    console.error("[Backend-Update] Critical Error:", error);
+    // Return the actual error message to the client for the alert
+    return NextResponse.json({ success: false, message: error.message || "Internal Server Error" }, { status: 500 });
   }
 };
 

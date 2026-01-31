@@ -41,6 +41,10 @@ export default function AdminPage() {
 
   const tabs = ["All", "Drafts", "Published"];
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     fetchSpecialists();
   }, []);
@@ -59,7 +63,31 @@ export default function AdminPage() {
     }
   };
 
+  const handleExport = () => {
+    if (specialists.length === 0) return;
+    
+    const headers = ["ID", "Title", "Price", "Duration", "Status", "Created At"];
+    const rows = specialists.map(s => [
+      s.id,
+      `"${s.title.replace(/"/g, '""')}"`, // Escape quotes
+      s.final_price,
+      s.duration_days,
+      s.is_draft ? "Draft" : "Published",
+      new Date(s.created_at).toLocaleDateString()
+    ]);
 
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + headers.join(",") + "\n" 
+      + rows.map(e => e.join(",")).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "specialists_export.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const deleteSpecialist = async (id: string) => {
       if (!confirm("Are you sure you want to delete this specialist?")) return;
@@ -87,6 +115,32 @@ export default function AdminPage() {
     }
   };
 
+  const toggleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedIds(new Set(filteredSpecialists.map(s => s.id)));
+    } else {
+      setSelectedIds(new Set());
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const getApprovalStatus = (s: any) => {
+    // Check verification_status from DB, default to PENDING
+    const status = s.verification_status || "PENDING";
+    if (status === "VERIFIED") return { label: "Approved", color: "bg-green-100 text-green-700" };
+    if (status === "REJECTED") return { label: "Rejected", color: "bg-red-100 text-red-700" };
+    return { label: "Under-Review", color: "bg-cyan-100 text-cyan-700" };
+  };
+
   const filteredSpecialists = specialists.filter((specialist) => {
     // 1. Filter by Tab
     if (activeTab === "Published" && specialist.is_draft) return false;
@@ -100,6 +154,13 @@ export default function AdminPage() {
 
     return true;
   });
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredSpecialists.length / itemsPerPage);
+  const paginatedSpecialists = filteredSpecialists.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <div className="flex-1 bg-white min-h-screen font-sans text-gray-900 px-6 py-8">
@@ -118,7 +179,7 @@ export default function AdminPage() {
           {tabs.map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => { setActiveTab(tab); setCurrentPage(1); }}
               className={`
                 whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm
                 ${activeTab === tab
@@ -139,7 +200,7 @@ export default function AdminPage() {
             type="text"
             placeholder="Search Specialists"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
             className="w-full h-10 pl-3 pr-10 bg-gray-50 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-500"
           />
         </div>
@@ -151,7 +212,10 @@ export default function AdminPage() {
                Create
              </button>
            </Link>
-           <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-[#0F172A] text-white px-4 py-2 rounded text-sm font-medium hover:bg-gray-800">
+           <button 
+             onClick={handleExport}
+             className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-[#0F172A] text-white px-4 py-2 rounded text-sm font-medium hover:bg-gray-800"
+           >
              <Download className="h-4 w-4" />
              Export
            </button>
@@ -169,7 +233,12 @@ export default function AdminPage() {
           <thead>
             <tr className="border-b border-gray-100">
               <th className="py-4 pl-4 pr-3 w-10">
-                 <input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                 <input 
+                    type="checkbox" 
+                    onChange={toggleSelectAll}
+                    checked={paginatedSpecialists.length > 0 && paginatedSpecialists.every(s => selectedIds.has(s.id))}
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                  />
               </th>
               <th className="py-4 px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Service</th>
               <th className="py-4 px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
@@ -181,14 +250,21 @@ export default function AdminPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {filteredSpecialists.map((specialist) => (
+            {paginatedSpecialists.map((specialist) => {
+               const status = getApprovalStatus(specialist);
+               return (
               <tr key={specialist.id} className="hover:bg-gray-50/50">
                 <td className="py-4 pl-4 pr-3">
-                  <input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                  <input 
+                    type="checkbox" 
+                    checked={selectedIds.has(specialist.id)}
+                    onChange={() => toggleSelectOne(specialist.id)}
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                  />
                 </td>
                 <td className="py-4 px-3">
                   <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full overflow-hidden relative bg-gray-200">
+                    <div className="h-8 w-8 rounded-full overflow-hidden relative bg-gray-200 flex-shrink-0">
                          {specialist.media?.[0]?.url ? (
                            <Image
                               src={specialist.media[0].url}
@@ -200,14 +276,14 @@ export default function AdminPage() {
                            <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-500">Img</div>
                          )}
                     </div>
-                    <div>
+                    <div className="min-w-0">
                         <div className="text-sm font-medium text-gray-900 truncate max-w-[200px]" title={specialist.title}>{specialist.title}</div>
                         <div className="text-xs text-gray-500">Company Secretary</div>
                     </div>
                   </div>
                 </td>
                 <td className="py-4 px-3 text-sm font-semibold text-gray-700 whitespace-nowrap">
-                  RM {specialist.final_price?.toLocaleString() ?? "0"}
+                  RM {Number(specialist.final_price || 0).toLocaleString()}
                 </td>
                 <td className="py-4 px-3 text-sm text-gray-600 text-center">
                   {specialist.purchases ?? 0}
@@ -218,11 +294,10 @@ export default function AdminPage() {
                 <td className="py-4 px-3 text-center">
                   <span
                     className={`
-                      inline-flex items-center rounded px-2 py-0.5 text-xs font-medium
-                      ${specialist.approval_status === "Approved" ? "bg-green-100 text-green-700" : "bg-cyan-100 text-cyan-700"}
+                      inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${status.color}
                     `}
                   >
-                    {specialist.approval_status ?? "Under-Review"}
+                    {status.label}
                   </span>
                 </td>
                 <td className="py-4 px-3 text-center">
@@ -232,7 +307,7 @@ export default function AdminPage() {
                       ${!specialist.is_draft ? "bg-green-500" : "bg-gray-400"}
                     `}
                   >
-                     {specialist.is_draft ? "Draft" : "Published"}
+                    {specialist.is_draft ? "Draft" : "Published"}
                   </span>
                 </td>
                 <td className="py-4 px-3 text-center relative">
@@ -265,27 +340,36 @@ export default function AdminPage() {
                   )}
                 </td>
               </tr>
-            ))}
+            )})}
           </tbody>
         </table>
         )}
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-center gap-2 mt-8 mb-8 text-sm text-gray-600">
-         <button className="flex items-center hover:text-gray-900">
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            Previous
-         </button>
-         <div className="flex items-center gap-1 mx-4">
-             <button className="w-6 h-6 flex items-center justify-center text-gray-900 font-medium">1</button>
-             {/* Pagination logic would go here */}
-         </div>
-         <button className="flex items-center hover:text-gray-900">
-            Next
-            <ChevronRight className="h-4 w-4 ml-1" />
-         </button>
-      </div>
+      {filteredSpecialists.length > 0 && (
+          <div className="flex items-center justify-center gap-2 mt-8 mb-8 text-sm text-gray-600">
+             <button 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="flex items-center hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+             >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Previous
+             </button>
+             <div className="flex items-center gap-1 mx-4">
+                 <span className="font-medium text-gray-900">Page {currentPage} of {totalPages}</span>
+             </div>
+             <button 
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="flex items-center hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+             >
+                Next
+                <ChevronRight className="h-4 w-4 ml-1" />
+             </button>
+          </div>
+      )}
     </div>
   );
 }

@@ -72,23 +72,8 @@ model Specialist {
 
   media             Media[]
   service_offerings ServiceOffering[]
-  additional_offerings AdditionalOffering[]
 
   @@map("specialists")
-}
-
-model AdditionalOffering {
-  id            String     @id @default(uuid()) @db.Uuid
-  specialist_id String     @db.Uuid
-  title         String
-  price         Decimal    @db.Decimal(10, 2)
-  created_at    DateTime   @default(now())
-  updated_at    DateTime   @updatedAt
-
-  specialist    Specialist @relation(fields: [specialist_id], references: [id], onDelete: Cascade)
-
-  @@index([specialist_id])
-  @@map("additional_offerings")
 }
 
 model Media {
@@ -141,13 +126,52 @@ model ServiceOffering {
   id                               String   @id @default(uuid()) @db.Uuid
   specialist_id                    String   @db.Uuid
   service_offerings_master_list_id String   @db.Uuid
+  price                            Decimal? @db.Decimal(10, 2)
   created_at                       DateTime @default(now())
   updated_at                       DateTime @updatedAt
 
   specialist       Specialist                @relation(fields: [specialist_id], references: [id], onDelete: Cascade)
   master_list_item ServiceOfferingMasterList @relation(fields: [service_offerings_master_list_id], references: [id], onDelete: Cascade)
 
-  @@index([specialist_id])
   @@index([service_offerings_master_list_id])
   @@map("service_offerings")
+}
+
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @unique
+  name      String?
+  role      UserRole @default(USER)
+  photo_url String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  registrations CompanyRegistration[]
+
+  @@map("users")
+}
+
+model CompanyRegistration {
+    id String @id @default(uuid()) @db.Uuid
+    userId String @db.Uuid
+    
+    companyName String @map("company_name")
+    companyType String? @map("company_type")
+    
+    status RegistrationStatus @default(PENDING)
+    
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    user User @relation(fields: [userId], references: [id])
+
+    @@map("company_registrations")
+}
+
+enum RegistrationStatus {
+    PENDING
+    IN_PROGRESS
+    APPROVED
+    REJECTED
+    ACTION_REQUIRED
 }
