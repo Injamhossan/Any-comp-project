@@ -54,7 +54,10 @@ export async function PUT(req: NextRequest) {
                 company_name: body.company_name,
                 company_logo_url: body.company_logo_url,
                 certifications: body.certifications,
-                photo_url: body.photo_url || body.photoUrl 
+                photo_url: body.photo_url || body.photoUrl,
+                clients_count: body.clients_count ? parseInt(body.clients_count) : undefined,
+                experience_years: body.experience_years ? parseInt(body.experience_years) : undefined,
+                firm_description: body.firm_description
             }
         });
 

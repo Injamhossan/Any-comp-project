@@ -24,7 +24,10 @@ export default function SettingsPage() {
       description: "",
       certifications: "",
       company_name: "",
-      company_logo_url: ""
+      company_logo_url: "",
+      clients_count: 0,
+      experience_years: 0,
+      firm_description: ""
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -52,7 +55,10 @@ export default function SettingsPage() {
                         description: data.data.description || "",
                         certifications: (data.data.certifications || []).join(", "),
                         company_name: data.data.company_name || "",
-                        company_logo_url: data.data.company_logo_url || ""
+                        company_logo_url: data.data.company_logo_url || "",
+                        clients_count: data.data.clients_count || 0,
+                        experience_years: data.data.experience_years || 0,
+                        firm_description: data.data.firm_description || ""
                     }));
                 }
             })
@@ -169,7 +175,10 @@ export default function SettingsPage() {
                   description: formData.description,
                   certifications: formData.certifications.split(",").map(s => s.trim()).filter(Boolean),
                   company_name: formData.company_name,
-                  company_logo_url: formData.company_logo_url
+                  company_logo_url: formData.company_logo_url,
+                  clients_count: formData.clients_count,
+                  experience_years: formData.experience_years,
+                  firm_description: formData.firm_description
               })
           });
           const data = await res.json();
@@ -279,6 +288,36 @@ export default function SettingsPage() {
                                  placeholder="e.g. Corpse Services Sdn Bhd"
                                  value={formData.company_name}
                                  onChange={(e) => setFormData({...formData, company_name: e.target.value})}
+                                 className="mt-1 block w-full rounded-md border-gray-200 bg-white text-black shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
+                             />
+                        </div>
+                        <div className="sm:col-span-2">
+                             <label className="block text-sm font-medium text-black">Firm Description</label>
+                             <textarea 
+                                 rows={3}
+                                 placeholder="Describe your firm and its services..."
+                                 value={formData.firm_description}
+                                 onChange={(e) => setFormData({...formData, firm_description: e.target.value})}
+                                 className="mt-1 block w-full rounded-md border-gray-200 bg-white text-black shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border resize-none"
+                             />
+                        </div>
+                        <div>
+                             <label className="block text-sm font-medium text-black">Clients Served</label>
+                             <input 
+                                 type="number" 
+                                 placeholder="e.g. 250"
+                                 value={formData.clients_count}
+                                 onChange={(e) => setFormData({...formData, clients_count: parseInt(e.target.value) || 0})}
+                                 className="mt-1 block w-full rounded-md border-gray-200 bg-white text-black shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
+                             />
+                        </div>
+                        <div>
+                             <label className="block text-sm font-medium text-black">Years of Experience</label>
+                             <input 
+                                 type="number" 
+                                 placeholder="e.g. 2"
+                                 value={formData.experience_years}
+                                 onChange={(e) => setFormData({...formData, experience_years: parseInt(e.target.value) || 0})}
                                  className="mt-1 block w-full rounded-md border-gray-200 bg-white text-black shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
                              />
                         </div>

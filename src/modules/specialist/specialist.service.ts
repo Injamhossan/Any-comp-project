@@ -1,10 +1,30 @@
+import { Specialist, MediaType, MimeType } from "@prisma/client";
+import prisma from "@/lib/db"; 
 
-import { Specialist } from "@prisma/client";
-import prisma from "@/lib/db"; // Assuming you have a shared prisma client instance
+// Helper to construct media create input
+const prepareMediaCreate = (urls: string[]) => {
+  return {
+    create: urls.map((url, index) => ({
+      file_name: url.split('/').pop() || `image-${index}`,
+      file_size: 0,
+      display_order: index,
+      url: url,
+      media_type: MediaType.IMAGE,
+      mime_type: MimeType.IMAGE_JPEG, // Defaulting for now
+    }))
+  };
+};
 
 export const createSpecialist = async (data: any): Promise<Specialist> => {
+  const { media_urls, ...rest } = data;
+  
+  const createData: any = { ...rest };
+  if (media_urls && Array.isArray(media_urls)) {
+      createData.media = prepareMediaCreate(media_urls);
+  }
+
   return await prisma.specialist.create({
-    data,
+    data: createData,
   });
 };
 
@@ -31,17 +51,24 @@ export const getSpecialistByOwner = async (email: string, name?: string): Promis
        });
        if (byName) return byName;
    }
-
-   // Then try email (might fail if schema not updated, so wrapping in try/catch or just avoiding if possible)
-   // For now, we rely on name.
    return null;
 };
 
 
 export const updateSpecialist = async (id: string, data: any): Promise<Specialist> => {
+  const { media_urls, ...rest } = data;
+
+  const updateData: any = { ...rest };
+  if (media_urls && Array.isArray(media_urls)) {
+      updateData.media = {
+          deleteMany: {}, // Clear existing media
+          ...prepareMediaCreate(media_urls)
+      };
+  }
+
    return await prisma.specialist.update({
     where: { id },
-    data,
+    data: updateData,
   });
 };
 

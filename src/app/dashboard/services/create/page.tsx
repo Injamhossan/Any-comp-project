@@ -119,11 +119,7 @@ export default function CreateServicePage() {
   const registeredCompany = profileData?.registrations?.[0];
   const displayCompanyName = registeredCompany?.companyName || profileData?.company_name || "Company Name";
   const displayCompanyLogo = registeredCompany?.companyLogoUrl || profileData?.company_logo_url;
-
-  /* State for active upload slot */
   const [activeUploadIndex, setActiveUploadIndex] = useState<number | null>(null);
-
-  // ... (existing code) ...
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files;
@@ -264,6 +260,7 @@ export default function CreateServicePage() {
             total_number_of_ratings: 0,
             average_rating: 0,
             is_draft: false,
+            media_urls: images.filter(Boolean)
             
           };
 
@@ -377,9 +374,44 @@ export default function CreateServicePage() {
 
               {/* Additional Offerings */}
               <div className="space-y-4">
-                  <h3 className="text-xl font-bold text-gray-900 font-sans">Additional Offerings</h3>
+                  <div className="flex items-center justify-between">
+                     <h3 className="text-xl font-bold text-gray-900 font-sans">Additional Offerings</h3>
+                     <button 
+                        onClick={() => setIsEditDrawerOpen(true)}
+                        className="text-sm font-semibold text-[#0e3a8d] hover:underline"
+                     >
+                        + Add Offering
+                     </button>
+                  </div>
                   <p className="text-xs text-gray-400 pb-2">Enhance your service by adding additional offerings</p>
-                  <div className="h-[1px] bg-gray-200 w-full"></div>
+                  
+                  {formData.offerings.length > 0 ? (
+                      <div className="grid grid-cols-1 gap-3">
+                          {formData.offerings.map((offering, idx) => (
+                              <div key={idx} className="flex justify-between items-center p-4 border border-gray-100 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow">
+                                  <div className="flex items-center gap-3">
+                                      <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-700 flex-shrink-0">
+                                          <CheckCircle className="h-5 w-5" />
+                                      </div>
+                                      <div>
+                                          <h4 className="text-sm font-bold text-gray-900">{offering.title}</h4>
+                                          <p className="text-xs text-gray-500">Selected offering</p>
+                                      </div>
+                                  </div>
+                                  <div className="font-bold text-gray-900 whitespace-nowrap">
+                                      {offering.price > 0 ? `RM ${offering.price}` : 'Free'}
+                                  </div>
+                              </div>
+                          ))}
+                      </div>
+                  ) : (
+                      <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                          <p className="text-sm text-gray-500">No additional offerings selected.</p>
+                          <button onClick={() => setIsEditDrawerOpen(true)} className="text-[#0e3a8d] font-bold text-sm mt-2 hover:underline">Add Offerings</button>
+                      </div>
+                  )}
+
+                  <div className="h-[1px] bg-gray-200 w-full mt-4"></div>
               </div>
 
               {/* Company Secretary Section */}
@@ -408,7 +440,7 @@ export default function CreateServicePage() {
                                   </div>
                                   <div className="text-sm font-medium text-gray-700 mb-0.5">{displayCompanyName}</div>
                                   <div className="flex items-center gap-2 text-xs font-semibold text-gray-500">
-                                      <span>250 Clients</span>
+                                      <span>{profileData?.clients_count ?? 250} Clients</span>
                                       <span className="flex items-center gap-1"><Star className="h-3 w-3 fill-blue-900 text-blue-900" /> 4.9</span>
                                   </div>
                               </div>
@@ -424,7 +456,7 @@ export default function CreateServicePage() {
                           <div>
                               <h4 className="text-base font-bold text-gray-900 mb-2">{profileData?.name?.split(' ')[0] || "Grace"} is part of a firm</h4>
                               <p className="text-xs text-gray-500 leading-relaxed">
-                                  Company Secretary firms are professional service providers that manage corporate compliance, company registration, and statutory obligations on behalf of businesses.
+                                  {profileData?.firm_description || "Company Secretary firms are professional service providers that manage corporate compliance, company registration, and statutory obligations on behalf of businesses."}
                               </p>
                           </div>
 
@@ -440,7 +472,7 @@ export default function CreateServicePage() {
                                   </div>
                                   <div>
                                        <div className="text-sm font-bold text-gray-900">{displayCompanyName}</div>
-                                       <div className="text-[10px] text-gray-500">2 Years providing Company Secretarial services</div>
+                                       <div className="text-[10px] text-gray-500">{profileData?.experience_years ?? 2} Years providing Company Secretarial services</div>
                                   </div>
                               </div>
                           </div>
@@ -448,16 +480,25 @@ export default function CreateServicePage() {
                           <div className="space-y-3">
                               <h4 className="text-base font-bold text-gray-900">Certifications</h4>
                               <div className="flex items-center gap-4">
-                                  {/* Placeholder Cert Logos */}
-                                  <div className="h-6 w-12 bg-gray-100 rounded relative overflow-hidden grayscale opacity-70">
-                                      <div className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-gray-400">SSM</div>
-                                  </div>
-                                  <div className="h-6 w-12 bg-gray-100 rounded relative overflow-hidden grayscale opacity-70">
-                                      <div className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-gray-400">MAICSA</div>
-                                  </div>
-                                  <div className="h-8 w-8 rounded-full border border-gray-100 flex items-center justify-center grayscale opacity-70">
-                                       <div className="h-4 w-4 bg-blue-900/20 rounded-full"></div>
-                                  </div>
+                                  {profileData?.certifications && profileData.certifications.length > 0 ? (
+                                      profileData.certifications.map((cert: string, i: number) => (
+                                          <div key={i} className="h-6 min-w-[30px] px-2 bg-gray-100 rounded relative overflow-hidden flex items-center justify-center">
+                                              <span className="text-[8px] font-bold text-gray-600">{cert}</span>
+                                          </div>
+                                      ))
+                                  ) : (
+                                      <>
+                                          <div className="h-6 w-12 bg-gray-100 rounded relative overflow-hidden grayscale opacity-70">
+                                              <div className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-gray-400">SSM</div>
+                                          </div>
+                                          <div className="h-6 w-12 bg-gray-100 rounded relative overflow-hidden grayscale opacity-70">
+                                              <div className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-gray-400">MAICSA</div>
+                                          </div>
+                                          <div className="h-8 w-8 rounded-full border border-gray-100 flex items-center justify-center grayscale opacity-70">
+                                               <div className="h-4 w-4 bg-blue-900/20 rounded-full"></div>
+                                          </div>
+                                      </>
+                                  )}
                               </div>
                           </div>
                       </div>
