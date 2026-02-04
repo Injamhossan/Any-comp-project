@@ -1,7 +1,11 @@
-
 import { NextRequest, NextResponse } from "next/server";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { app } from "@/firebase/firebase.config";
+
+// Polyfill XMLHttpRequest for Firebase Storage in Node.js environment
+// 'storage/unknown' (404) often occurs in Node because the SDK relies on XHR
+const XMLHttpRequest = require("xhr2");
+global.XMLHttpRequest = XMLHttpRequest;
 
 export const uploadFile = async (req: NextRequest) => {
   try {
