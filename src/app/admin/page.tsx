@@ -53,7 +53,7 @@ export default function AdminPage() {
 
   const fetchSpecialists = async () => {
     try {
-      const res = await fetch('/api/specialists');
+      const res = await fetch('/api/specialists?mode=admin');
       const data = await res.json();
       if (data.success) {
         setSpecialists(data.data);

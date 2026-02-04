@@ -10,7 +10,7 @@ const prepareMediaCreate = (urls: string[]) => {
       display_order: index,
       url: url,
       media_type: MediaType.IMAGE,
-      mime_type: MimeType.IMAGE_JPEG, // Defaulting for now
+      mime_type: MimeType.IMAGE_JPEG,
     }))
   };
 };
@@ -28,9 +28,15 @@ export const createSpecialist = async (data: any): Promise<Specialist> => {
   });
 };
 
-export const getAllSpecialists = async (): Promise<Specialist[]> => {
+export const getAllSpecialists = async (includeUnverified = false): Promise<Specialist[]> => {
+  const whereClause: any = { deleted_at: null };
+  
+  if (!includeUnverified) {
+      whereClause.verification_status = "VERIFIED";
+  }
+
   return await prisma.specialist.findMany({
-    where: { deleted_at: null },
+    where: whereClause,
     include: { media: true },
   });
 };
@@ -38,6 +44,13 @@ export const getAllSpecialists = async (): Promise<Specialist[]> => {
 export const getSpecialistById = async (id: string): Promise<Specialist | null> => {
   return await prisma.specialist.findUnique({
     where: { id },
+    include: { media: true, service_offerings: true },
+  });
+};
+
+export const getSpecialistBySlug = async (slug: string): Promise<Specialist | null> => {
+  return await prisma.specialist.findUnique({
+    where: { slug },
     include: { media: true, service_offerings: true },
   });
 };

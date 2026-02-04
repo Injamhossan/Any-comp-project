@@ -10,6 +10,7 @@ import { ChevronRight, Home, ChevronDown } from "lucide-react";
 interface Specialist {
   id: string;
   title: string;
+  slug?: string;
   description: string;
   final_price: number;
   duration_days: number;
@@ -187,15 +188,20 @@ export default function Page() {
              <div className="col-span-full py-20 text-center text-gray-500">No services found.</div>
           ) : (
             processedSpecialists.map((specialist) => (
-              <SpecialistCard
-                key={specialist.id}
-                imageSrc={specialist.media?.[0]?.url} 
-                avatarSrc={specialist.avatar_url || "/placeholder-avatar.png"}
-                name={specialist.secretary_name || "Company Secretary"}
-                role="Company Secretary"
-                description={specialist.title} // Displaying the Title as the main description text on card
-                price={`RM ${Number(specialist.final_price).toLocaleString()}`}
-              />
+              <Link 
+                 key={specialist.id} 
+                 href={`/services/${specialist.slug || '#'}`}
+                 className="block hover:opacity-95 transition-opacity"
+              >
+                  <SpecialistCard
+                    imageSrc={specialist.media?.[0]?.url} 
+                    avatarSrc={specialist.avatar_url || "/placeholder-avatar.png"}
+                    name={specialist.secretary_name || "Company Secretary"}
+                    role="Company Secretary"
+                    description={specialist.title} // Displaying the Title as the main description text on card
+                    price={`RM ${Number(specialist.final_price).toLocaleString()}`}
+                  />
+              </Link>
             ))
           )}
         </div>

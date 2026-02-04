@@ -17,6 +17,17 @@ export const index = async (req: NextRequest) => {
     const { searchParams } = new URL(req.url);
     const email = searchParams.get('email');
     const name = searchParams.get('name');
+    const slug = searchParams.get('slug');
+
+    if (slug) {
+       const { getSpecialistBySlug } = await import("./specialist.service");
+       const specialist = await getSpecialistBySlug(slug);
+       if (specialist) {
+           return NextResponse.json({ success: true, data: [specialist] }, { status: 200 });
+       } else {
+           return NextResponse.json({ success: true, data: [] }, { status: 404 });
+       }
+    }
 
     if (email || name) {
       // Find my specialist profile
@@ -29,7 +40,11 @@ export const index = async (req: NextRequest) => {
       }
     }
 
-    const specialists = await getAllSpecialists();
+    const mode = searchParams.get('mode');
+
+    // ... (existing helper logic)
+
+    const specialists = await getAllSpecialists(mode === 'admin');
     return NextResponse.json({ success: true, data: specialists }, { status: 200 });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });

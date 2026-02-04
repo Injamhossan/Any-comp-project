@@ -781,8 +781,8 @@ export default function CreateServicePage() {
                               <div className="bg-[#0e2a6d] w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold">!</div>
                           </div>
                           <div>
-                              <h3 className="text-lg font-bold text-gray-900">Publish changes</h3>
-                              <p className="text-sm text-gray-500 mt-1">Do you want to publish these changes? It will appear in the marketplace listing</p>
+                              <h3 className="text-lg font-bold text-gray-900">Submit for Approval</h3>
+                              <p className="text-sm text-gray-500 mt-1">Your service will be submitted for admin approval. Once approved, it will be published to the marketplace.</p>
                           </div>
                       </div>
                       <div className="flex items-center gap-3 pt-2">
