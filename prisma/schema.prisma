@@ -50,6 +50,7 @@ model Specialist {
   average_rating          Decimal?           @default(0.0) @db.Decimal(3, 2)
   is_draft                Boolean            @default(true)
   total_number_of_ratings Int                @default(0)
+  purchase_count          Int                @default(0)
   title                   String
   slug                    String             @unique
   description             String             @db.Text
@@ -199,19 +200,27 @@ enum OrderStatus {
   COMPLETED
 }
 
+
 model Order {
   id String @id @default(uuid()) @db.Uuid
-  userId String @db.Uuid
+  userId String? @db.Uuid
   specialistId String @db.Uuid
   
   amount Decimal @db.Decimal(10, 2)
   status OrderStatus @default(PENDING)
   
+  // Guest/Customer Details
+  customerName String?
+  customerEmail String?
+  customerPhone String?
+  requirements String? @db.Text
+  
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user User @relation(fields: [userId], references: [id])
+  user User? @relation(fields: [userId], references: [id])
   specialist Specialist @relation(fields: [specialistId], references: [id])
 
   @@map("orders")
 }
+

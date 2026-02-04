@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Loader2, CheckCircle, ArrowRight, User } from "lucide-react";
 import Image from "next/image";
 
+
 export default function ServiceDetailsPage() {
   const { slug } = useParams();
   const router = useRouter();
@@ -15,10 +16,18 @@ export default function ServiceDetailsPage() {
   const [service, setService] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
+  
+  // Guest Checkout State
+  const [showGuestForm, setShowGuestForm] = useState(false);
+  const [guestDetails, setGuestDetails] = useState({
+      name: "",
+      email: "",
+      phone: "",
+      requirements: ""
+  });
 
   useEffect(() => {
     if (slug) {
-        // Handle array of slugs if caught by catch-all, though here it's [slug] so it should be string
         const slugStr = Array.isArray(slug) ? slug[0] : slug;
         
         fetch(`/api/specialists?slug=${encodeURIComponent(slugStr)}`)
@@ -33,43 +42,66 @@ export default function ServiceDetailsPage() {
     }
   }, [slug]);
 
+  const handleGuestInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const { name, value } = e.target;
+      setGuestDetails(prev => ({ ...prev, [name]: value }));
+  };
+
   const handlePurchase = async () => {
-      if (!user) {
-          alert("Please login to purchase");
-          // Redirect to login preserving logic
-          router.push("/login");
-          return;
-      }
-      
       if (!service) return;
+
+      // Validation for Guest
+      if (!user && showGuestForm) {
+          if (!guestDetails.name || !guestDetails.email || !guestDetails.phone) {
+              alert("Please fill in all required fields (Name, Email, Phone).");
+              return;
+          }
+      }
 
       setPurchasing(true);
       try {
-          // 1. Get User ID from DB (since auth context might only have firebase uid/email)
-          const profileRes = await fetch(`/api/user/profile?email=${encodeURIComponent(user.email || "")}`);
-          const profileData = await profileRes.json();
-          
-          if (!profileData.success || !profileData.data) {
-              alert("User profile not found in database. Please ensure you are registered.");
-              setPurchasing(false);
-              return;
+          let payload: any = {
+              specialistId: service.id,
+              amount: service.final_price || service.base_price,
+          };
+
+          if (user) {
+               // 1. Get User ID from DB
+               const profileRes = await fetch(`/api/user/profile?email=${encodeURIComponent(user.email || "")}`);
+               const profileData = await profileRes.json();
+               
+               if (!profileData.success || !profileData.data) {
+                   alert("User profile not found. Please ensure you are registered.");
+                   setPurchasing(false);
+                   return;
+               }
+               payload.userId = profileData.data.id;
+          } else {
+               // 2. Guest Details
+               payload.customerName = guestDetails.name;
+               payload.customerEmail = guestDetails.email;
+               payload.customerPhone = guestDetails.phone;
+               payload.requirements = guestDetails.requirements;
           }
 
-          // 2. Create Order
+          // 3. Create Order
           const res = await fetch("/api/orders", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                  specialistId: service.id,
-                  userId: profileData.data.id,
-                  amount: service.final_price || service.base_price
-              })
+              body: JSON.stringify(payload)
           });
           
           const result = await res.json();
           if (result.success) {
               alert("Order placed successfully! We will contact you shortly.");
-              // router.push("/dashboard"); 
+              if (user) {
+                  // Optional: Redirect registered users to dashboard
+                  // router.push("/dashboard"); 
+              } else {
+                  // Reset form for guests
+                  setShowGuestForm(false);
+                  setGuestDetails({ name: "", email: "", phone: "", requirements: "" });
+              }
           } else {
               alert("Failed to place order: " + (result.message || "Unknown error"));
           }
@@ -172,14 +204,57 @@ export default function ServiceDetailsPage() {
                              </div>
                          </div>
 
-                         <button 
-                            onClick={handlePurchase}
-                            disabled={purchasing}
-                            className={`w-full py-4 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-xl ${purchasing ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#0e3a8d] hover:bg-[#002f70]'}`}
-                         >
-                             {purchasing ? <Loader2 className="animate-spin h-5 w-5"/> : "Purchase Service"} 
-                             {!purchasing && <ArrowRight className="h-5 w-5" />}
-                         </button>
+                         {!user && showGuestForm ? (
+                            <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                <div className="space-y-3">
+                                    <h3 className="font-semibold text-gray-900">Guest Checkout</h3>
+                                    <input 
+                                        type="text" name="name" placeholder="Your Name *" required
+                                        value={guestDetails.name} onChange={handleGuestInputChange}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-900/20 text-sm text-black placeholder:text-black"
+                                    />
+                                    <input 
+                                        type="email" name="email" placeholder="Email Address *" required
+                                        value={guestDetails.email} onChange={handleGuestInputChange}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-900/20 text-sm text-black placeholder:text-black"
+                                    />
+                                    <input 
+                                        type="tel" name="phone" placeholder="Phone Number *" required
+                                        value={guestDetails.phone} onChange={handleGuestInputChange}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-900/20 text-sm text-black placeholder:text-black"
+                                    />
+                                    <textarea 
+                                        name="requirements" placeholder="Special Requirements (Optional)" rows={3}
+                                        value={guestDetails.requirements} onChange={handleGuestInputChange}
+                                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-900/20 text-sm resize-none text-black placeholder:text-black"
+                                    />
+                                </div>
+                                <div className="flex gap-2 pt-2">
+                                    <button 
+                                        onClick={() => setShowGuestForm(false)}
+                                        className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold text-sm transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button 
+                                        onClick={handlePurchase}
+                                        disabled={purchasing}
+                                        className="flex-[2] py-3 bg-[#0e3a8d] hover:bg-[#002f70] text-white rounded-xl font-semibold text-sm transition-colors flex items-center justify-center"
+                                    >
+                                        {purchasing ? <Loader2 className="animate-spin h-4 w-4"/> : "Confirm Order"}
+                                    </button>
+                                </div>
+                            </div>
+                         ) : (
+                            <button 
+                                onClick={() => user ? handlePurchase() : setShowGuestForm(true)}
+                                disabled={purchasing}
+                                className={`w-full py-4 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-xl ${purchasing ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#0e3a8d] hover:bg-[#002f70]'}`}
+                            >
+                                {purchasing ? <Loader2 className="animate-spin h-5 w-5"/> : (user ? "Purchase Service" : "Purchase as Guest")} 
+                                {!purchasing && <ArrowRight className="h-5 w-5" />}
+                            </button>
+                         )}
                          
                          <p className="text-xs text-center text-gray-400 mt-4 leading-relaxed">
                              By clicking Purchase, you agree to our Terms of Service. Your order will be processed immediately.
@@ -191,3 +266,4 @@ export default function ServiceDetailsPage() {
       </div>
   );
 }
+
