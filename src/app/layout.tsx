@@ -4,7 +4,6 @@ import "@/styles/globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/context/AuthContext";
 import { SessionProvider } from "@/components/providers/SessionProvider";
-import { SessionProvider } from "@/components/providers/SessionProvider";
 
 const proxima = localFont({
   src: "../assets/fonts/Proxima_Nova.ttf",

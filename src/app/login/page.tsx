@@ -1,13 +1,12 @@
 "use client";
 
+
 import { useState } from "react";
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
-import { app } from "@/firebase/firebase.config";
+import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-
-const auth = getAuth(app);
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -22,12 +21,23 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      // Check for Admin
-      if (userCredential.user.email?.toLowerCase() === "admin@anycomp.com") {
-        router.push("/admin");
+      const res = await signIn("credentials", {
+        redirect: false,
+        email,
+        password,
+      });
+
+      if (res?.error) {
+        setError("Invalid email or password");
+        toast.error("Login failed");
       } else {
-        router.push("/dashboard/services/create");
+        toast.success("Successfully logged in!");
+        // Check for Admin - In real app, check session role
+        if (email.toLowerCase() === "admin@anycomp.com") {
+             router.push("/admin");
+        } else {
+             router.push("/dashboard/services/create");
+        }
       }
     } catch (err: any) {
       setError(err.message || "Failed to login");
@@ -35,6 +45,7 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-6 py-12 lg:px-8">

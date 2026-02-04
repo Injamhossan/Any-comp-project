@@ -4,19 +4,16 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { ImageUploadBox } from "@/components/ui/image-upload-box";
 import React, { useEffect, useState, useRef } from "react";
+import { signOut } from "next-auth/react";
 import { Loader2, Camera, User as UserIcon, Building2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-
-import { getAuth, updateProfile } from "firebase/auth";
-import { app } from "@/firebase/firebase.config";
 
 export default function SettingsPage() {
   const { user } = useAuth();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const companyLogoRef = useRef<HTMLInputElement>(null);
-  const auth = getAuth(app);
   
   const [formData, setFormData] = useState({
       name: "",
@@ -105,17 +102,8 @@ export default function SettingsPage() {
                   })
               });
 
-              // 3. Immediate Update to Firebase Auth (Sidebar/Header)
-              if (auth.currentUser) {
-                  await updateProfile(auth.currentUser, {
-                      photoURL: newPhotoUrl
-                  });
-                   // Force token refresh or reload to propagate changes
-                  await auth.currentUser.reload();
-              }
               
               toast.success("Profile photo updated successfully!");
-              // 4. Force reload to ensure all components (Sidebar) pick up the new image
               window.location.reload();
 
           } else {
@@ -184,13 +172,8 @@ export default function SettingsPage() {
           const data = await res.json();
 
           if (data.success) {
-              // 2. Update Firebase Auth Profile
-              if (auth.currentUser) {
-                  await updateProfile(auth.currentUser, {
-                      displayName: formData.name,
-                      photoURL: formData.photoUrl
-                  });
-              }
+              // 2. Update Session (NextAuth session will update on reload or we can trigger update)
+              // For now, reload is sufficient or useSession().update()
               
               toast.success("Profile updated successfully!");
               window.location.reload();
@@ -404,11 +387,7 @@ export default function SettingsPage() {
           </div>
           <div className="p-6">
               <button 
-                onClick={() => {
-                    import("firebase/auth").then(({ signOut }) => {
-                        signOut(auth).then(() => router.push("/login"));
-                    });
-                }}
+                onClick={() => signOut({ callbackUrl: "/login" })}
                 className="bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 border border-red-200 px-6 py-2 rounded-md text-sm font-medium transition-colors"
                >
                   Sign Out
