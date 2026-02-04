@@ -23,6 +23,7 @@ export const uploadFile = async (req: NextRequest) => {
     
     // Initialize Firebase Storage
     const storage = getStorage(app);
+    console.log("Using Firebase Storage Bucket:", storage.app.options.storageBucket);
     const storageRef = ref(storage, `uploads/${filename}`);
 
     // Upload to Firebase Storage
@@ -41,7 +42,8 @@ export const uploadFile = async (req: NextRequest) => {
         size: fileObject.size
     });
   } catch (error: any) {
+    console.error("Upload handler error full object:", JSON.stringify(error, null, 2));
     console.error("Upload handler error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message, code: error.code }, { status: 500 });
   }
 };
