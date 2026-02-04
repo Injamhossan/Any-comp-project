@@ -143,28 +143,73 @@ model ServiceOffering {
   @@map("service_offerings")
 }
 
+
+model Account {
+  id                 String  @id @default(uuid()) @db.Uuid
+  userId             String  @db.Uuid
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(uuid()) @db.Uuid
+  sessionToken String   @unique
+  userId       String   @db.Uuid
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
 model User {
-  id        String   @id @default(uuid()) @db.Uuid
-  email     String   @unique
-  name      String?
-  role      UserRole @default(USER)
-  photo_url String?
-  description String? @db.Text
-  phone     String?
-  company_name String?
+  id            String    @id @default(uuid()) @db.Uuid
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime? @map("email_verified")
+  image         String?   @map("photo_url") // Mapped existing photo_url to standard 'image' field for NextAuth
+  password      String?   // For Credentials Auth
+  
+  role          UserRole  @default(USER)
+  description   String?   @db.Text
+  phone         String?
+  company_name  String?
   company_logo_url String?
   certifications String[] @default([])
-  clients_count Int @default(0)
-  experience_years Int @default(0)
+  clients_count Int       @default(0)
+  experience_years Int    @default(0)
   firm_description String? @db.Text
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
   
-  registrations CompanyRegistration[]
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
 
-  orders Order[]
+  accounts      Account[]
+  sessions      Session[]
+  registrations CompanyRegistration[]
+  orders        Order[]
 
   @@map("users")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
 }
 
 model CompanyRegistration {

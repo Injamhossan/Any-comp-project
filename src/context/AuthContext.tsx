@@ -1,19 +1,11 @@
+
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { 
-  getAuth, 
-  onAuthStateChanged, 
-  User, 
-  getIdToken 
-} from "firebase/auth";
-import { app } from "@/firebase/firebase.config";
-
-// Initialize Firebase Auth
-const auth = getAuth(app);
+import { createContext, useContext, ReactNode } from "react";
+import { useSession } from "next-auth/react";
 
 interface AuthContextType {
-  user: User | null;
+  user: any | null; 
   loading: boolean;
   token: string | null;
 }
@@ -27,29 +19,21 @@ const AuthContext = createContext<AuthContextType>({
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState<string | null>(null);
+  const { data: session, status } = useSession();
+  const loading = status === "loading";
+  
+  // Adapt NextAuth session user to look like Firebase User for compatibility
+  const user = session?.user ? {
+    ...session.user,
+    uid: session.user.id,
+    displayName: session.user.name,
+    email: session.user.email,
+    photoURL: session.user.image
+  } : null;
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-      if (currentUser) {
-        const idToken = await getIdToken(currentUser);
-        setToken(idToken);
-      } else {
-        setToken(null);
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  // Force token refresh utility if needed
-  useEffect(() => {
-     // Optional: interceptor logic or interval to refresh token can go here
-  }, [user]);
+  // NextAuth uses session cookies primarily, but we can pass a value if API needs it.
+  // We'll pass null or session id for now.
+  const token = null;
 
   return (
     <AuthContext.Provider value={{ user, loading, token }}>

@@ -1,0 +1,85 @@
+
+import { PrismaAdapter } from "@auth/prisma-adapter"
+import { NextAuthOptions } from "next-auth"
+import CredentialsProvider from "next-auth/providers/credentials"
+import GoogleProvider from "next-auth/providers/google"
+import { prisma } from "@/lib/db"
+import bcrypt from "bcryptjs"
+
+export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
+  session: {
+    strategy: "jwt"
+  },
+  pages: {
+    signIn: "/login",
+  },
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    }),
+    CredentialsProvider({
+      name: "credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Invalid credentials");
+        }
+
+        const user = await prisma.user.findUnique({
+          where: {
+            email: credentials.email
+          }
+        });
+
+        if (!user || !user.password) {
+          throw new Error("Invalid credentials");
+        }
+
+        const isCorrectPassword = await bcrypt.compare(
+          credentials.password,
+          user.password
+        );
+
+        if (!isCorrectPassword) {
+            throw new Error("Invalid credentials");
+        }
+
+        return user;
+      }
+    })
+  ],
+  callbacks: {
+    async session({ token, session }) {
+        if (token && session.user) {
+            session.user.id = token.id as string;
+            session.user.role = token.role as string;
+            session.user.image = token.picture;
+            session.user.name = token.name;
+        }
+        return session;
+    },
+    async jwt({ token, user, trigger, session }) {
+        // Initial sign in
+        if (user) {
+            token.id = user.id;
+            // @ts-ignore - The adapter might not type custom fields by default in 'user', need to cast or access directly
+            token.role = (user as any).role;
+        }
+
+        // Refetch user on every request to ensure role/data is up to date (optional, but good for role changes)
+        // Or better yet, just trust the token expiry.
+        
+        // Support updating session client side
+        if (trigger === "update" && session) {
+            token = { ...token, ...session }
+        }
+
+        return token;
+    }
+  }
+}
