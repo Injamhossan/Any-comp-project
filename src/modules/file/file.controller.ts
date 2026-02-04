@@ -21,8 +21,9 @@ export const uploadFile = async (req: NextRequest) => {
     const sanitizedFilename = fileObject.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9.\-_]/g, '');
     const filename = `${Date.now()}_${sanitizedFilename}`;
     
-    // Initialize Firebase Storage
-    const storage = getStorage(app);
+    // Initialize Firebase Storage with explicit bucket
+    // This helps resolve issues where the default app config might be missing the bucket
+    const storage = getStorage(app, "gs://any-comp-project.appspot.com");
     console.log("Using Firebase Storage Bucket:", storage.app.options.storageBucket);
     const storageRef = ref(storage, `uploads/${filename}`);
 
