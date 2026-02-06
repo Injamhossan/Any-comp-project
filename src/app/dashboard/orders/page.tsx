@@ -1,6 +1,6 @@
 "use client";
 
-import { ClipboardList, Search, Loader2, ArrowRight, Store, ShoppingBag, Trash2, X, User, Mail, Phone, Clock, FileText, CheckCircle, ChevronDown, Check } from "lucide-react";
+import { ClipboardList, Search, Loader2, ArrowRight, Store, ShoppingBag, Trash2, X, User, Mail, Phone, Clock, FileText, CheckCircle, ChevronDown, Check, Eye } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
@@ -378,7 +378,7 @@ export default function OrdersPage() {
                           <button 
                             onClick={async () => {
                                 await handleStatusUpdate(selectedOrder.id, 'COMPLETED');
-                                setSelectedOrder(prev => ({...prev, status: 'COMPLETED'}));
+                                setSelectedOrder((prev: any) => ({...prev, status: 'COMPLETED'}));
                             }}
                             className="flex-1 bg-emerald-600 text-white font-black uppercase tracking-widest text-xs py-4 rounded-[1.5rem] hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 flex items-center justify-center gap-2"
                           >
