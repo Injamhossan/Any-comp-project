@@ -1,6 +1,6 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from "typeorm";
-import { Specialist } from "./Specialist";
+import type { Specialist } from "./Specialist";
 
 export enum MediaType {
   IMAGE = "IMAGE",
@@ -16,7 +16,7 @@ export enum MimeType {
   APPLICATION_PDF = "APPLICATION_PDF",
 }
 
-@Entity("media")
+@Entity("media", { name: "Media" })
 export class Media {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
@@ -54,7 +54,7 @@ export class Media {
   @UpdateDateColumn()
   updated_at!: Date;
 
-  @ManyToOne(() => Specialist, (specialist) => specialist.media, { onDelete: "CASCADE" })
+  @ManyToOne("Specialist", "media", { onDelete: "CASCADE" })
   @JoinColumn({ name: "specialist_id" })
   specialist!: Specialist;
 }

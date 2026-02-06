@@ -1,8 +1,8 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn } from "typeorm";
-import { Media } from "@/entities/Media";
-import { ServiceOffering } from "@/entities/ServiceOffering";
-import { Order } from "@/entities/Order";
+import type { Media } from "@/entities/Media";
+import type { ServiceOffering } from "@/entities/ServiceOffering";
+import type { Order } from "@/entities/Order";
 
 export enum VerificationStatus {
   PENDING = "PENDING",
@@ -10,7 +10,7 @@ export enum VerificationStatus {
   REJECTED = "REJECTED",
 }
 
-@Entity("specialists")
+@Entity("specialists", { name: "Specialist" })
 export class Specialist {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
@@ -90,12 +90,12 @@ export class Specialist {
   @Column({ type: "timestamp", nullable: true })
   deleted_at!: Date | null;
 
-  @OneToMany(() => Media, (media) => media.specialist)
+  @OneToMany("Media", "specialist")
   media!: Media[];
 
-  @OneToMany(() => ServiceOffering, (service_offering) => service_offering.specialist)
+  @OneToMany("ServiceOffering", "specialist")
   service_offerings!: ServiceOffering[];
 
-  @OneToMany(() => Order, (order) => order.specialist)
+  @OneToMany("Order", "specialist")
   orders!: Order[];
 }

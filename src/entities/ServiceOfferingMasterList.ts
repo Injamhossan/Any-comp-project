@@ -1,8 +1,8 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from "typeorm";
-import { ServiceOffering } from "@/entities/ServiceOffering";
+import type { ServiceOffering } from "@/entities/ServiceOffering";
 
-@Entity("service_offerings_master_list")
+@Entity("service_offerings_master_list", { name: "ServiceOfferingMasterList" })
 export class ServiceOfferingMasterList {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
@@ -25,6 +25,6 @@ export class ServiceOfferingMasterList {
   @UpdateDateColumn()
   updated_at!: Date;
 
-  @OneToMany(() => ServiceOffering, (offering) => offering.master_list_item)
+  @OneToMany("ServiceOffering", "master_list_item")
   service_offerings!: ServiceOffering[];
 }

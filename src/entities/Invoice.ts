@@ -1,7 +1,7 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from "typeorm";
-import { User } from "./User";
-import { Order } from "./Order";
+import type { User } from "./User";
+import type { Order } from "./Order";
 
 export enum InvoiceStatus {
   PENDING = "PENDING",
@@ -10,7 +10,7 @@ export enum InvoiceStatus {
   CANCELLED = "CANCELLED",
 }
 
-@Entity("invoices")
+@Entity("invoices", { name: "Invoice" })
 export class Invoice {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
@@ -42,11 +42,11 @@ export class Invoice {
   @UpdateDateColumn({ name: "updated_at" })
   updatedAt!: Date;
 
-  @ManyToOne(() => User, (user) => user.invoices)
+  @ManyToOne("User", "invoices")
   @JoinColumn({ name: "userId" })
   user!: User;
 
-  @OneToOne(() => Order, (order) => order.invoice)
+  @OneToOne("Order", "invoice")
   @JoinColumn({ name: "orderId" })
   order!: Order;
 }

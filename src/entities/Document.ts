@@ -1,6 +1,6 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from "typeorm";
-import { User } from "./User";
+import type { User } from "./User";
 
 export enum DocumentStatus {
   PENDING = "PENDING",
@@ -9,7 +9,7 @@ export enum DocumentStatus {
   REJECTED = "REJECTED",
 }
 
-@Entity("documents")
+@Entity("documents", { name: "Document" })
 export class Document {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
@@ -41,7 +41,7 @@ export class Document {
   @UpdateDateColumn({ name: "updated_at" })
   updatedAt!: Date;
 
-  @ManyToOne(() => User, (user) => user.documents)
+  @ManyToOne("User", "documents")
   @JoinColumn({ name: "userId" })
   user!: User;
 }

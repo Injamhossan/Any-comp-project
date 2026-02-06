@@ -1,8 +1,8 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from "typeorm";
-import { User } from "./User";
+import type { User } from "./User";
 
-@Entity("accounts")
+@Entity("accounts", { name: "Account" })
 export class Account {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
@@ -40,7 +40,7 @@ export class Account {
   @Column({ type: "text", nullable: true })
   session_state!: string | null;
 
-  @ManyToOne(() => User, (user) => user.accounts, { onDelete: "CASCADE" })
+  @ManyToOne("User", "accounts", { onDelete: "CASCADE" })
   @JoinColumn({ name: "userId" })
   user!: User;
 }
