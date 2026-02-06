@@ -1,6 +1,6 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from "typeorm";
-import type { User } from "./User";
+import { User } from "./User";
 
 export enum RegistrationStatus {
   PENDING = "PENDING",
@@ -36,7 +36,7 @@ export class CompanyRegistration {
   @UpdateDateColumn({ name: "updated_at" })
   updatedAt!: Date;
 
-  @ManyToOne("User", "registrations")
+  @ManyToOne(() => User, (user) => user.registrations)
   @JoinColumn({ name: "userId" })
   user!: User;
 }

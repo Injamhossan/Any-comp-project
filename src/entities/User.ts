@@ -1,12 +1,12 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from "typeorm";
-import type { Account } from "./Account";
-import type { Session } from "./Session";
-import type { CompanyRegistration } from "./CompanyRegistration";
-import type { Order } from "./Order";
-import type { Invoice } from "./Invoice";
-import type { Notification } from "./Notification";
-import type { Document } from "./Document";
+import { Account } from "./Account";
+import { Session } from "./Session";
+import { CompanyRegistration } from "./CompanyRegistration";
+import { Order } from "./Order";
+import { Invoice } from "./Invoice";
+import { Notification } from "./Notification";
+import { Document } from "./Document";
 
 export enum UserRole {
   USER = "USER",
@@ -67,24 +67,24 @@ export class User {
   @UpdateDateColumn({ name: "updated_at" })
   updatedAt!: Date;
 
-  @OneToMany("Account", "user")
+  @OneToMany(() => Account, (account) => account.user)
   accounts!: Account[];
 
-  @OneToMany("Session", "user")
+  @OneToMany(() => Session, (session) => session.user)
   sessions!: Session[];
 
-  @OneToMany("CompanyRegistration", "user")
+  @OneToMany(() => CompanyRegistration, (registration) => registration.user)
   registrations!: CompanyRegistration[];
 
-  @OneToMany("Order", "user")
+  @OneToMany(() => Order, (order) => order.user)
   orders!: Order[];
 
-  @OneToMany("Invoice", "user")
+  @OneToMany(() => Invoice, (invoice) => invoice.user)
   invoices!: Invoice[];
 
-  @OneToMany("Notification", "user")
+  @OneToMany(() => Notification, (notification) => notification.user)
   notifications!: Notification[];
 
-  @OneToMany("Document", "user")
+  @OneToMany(() => Document, (document) => document.user)
   documents!: Document[];
 }

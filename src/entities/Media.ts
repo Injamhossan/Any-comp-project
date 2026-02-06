@@ -1,6 +1,6 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from "typeorm";
-import type { Specialist } from "./Specialist";
+import { Specialist } from "./Specialist";
 
 export enum MediaType {
   IMAGE = "IMAGE",
@@ -54,7 +54,7 @@ export class Media {
   @UpdateDateColumn()
   updated_at!: Date;
 
-  @ManyToOne("Specialist", "media", { onDelete: "CASCADE" })
+  @ManyToOne(() => Specialist, (specialist) => specialist.media, { onDelete: "CASCADE" })
   @JoinColumn({ name: "specialist_id" })
   specialist!: Specialist;
 }
