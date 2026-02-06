@@ -1,12 +1,5 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from "typeorm";
-import type { Account } from "./Account";
-import type { Session } from "./Session";
-import type { CompanyRegistration } from "./CompanyRegistration";
-import type { Order } from "./Order";
-import type { Invoice } from "./Invoice";
-import type { Notification } from "./Notification";
-import type { Document } from "./Document";
 
 export enum UserRole {
   USER = "USER",
@@ -14,7 +7,7 @@ export enum UserRole {
   SPECIALIST = "SPECIALIST",
 }
 
-@Entity("users", { name: "User" })
+@Entity("users")
 export class User {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
@@ -68,23 +61,23 @@ export class User {
   updatedAt!: Date;
 
   @OneToMany("Account", "user")
-  accounts!: Account[];
+  accounts!: any[];
 
   @OneToMany("Session", "user")
-  sessions!: Session[];
+  sessions!: any[];
 
   @OneToMany("CompanyRegistration", "user")
-  registrations!: CompanyRegistration[];
+  registrations!: any[];
 
   @OneToMany("Order", "user")
-  orders!: Order[];
+  orders!: any[];
 
   @OneToMany("Invoice", "user")
-  invoices!: Invoice[];
+  invoices!: any[];
 
   @OneToMany("Notification", "user")
-  notifications!: Notification[];
+  notifications!: any[];
 
   @OneToMany("Document", "user")
-  documents!: Document[];
+  documents!: any[];
 }

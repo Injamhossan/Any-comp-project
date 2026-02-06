@@ -1,7 +1,5 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from "typeorm";
-import type { User } from "./User";
-import type { Order } from "./Order";
 
 export enum InvoiceStatus {
   PENDING = "PENDING",
@@ -44,9 +42,9 @@ export class Invoice {
 
   @ManyToOne("User", "invoices")
   @JoinColumn({ name: "userId" })
-  user!: User;
+  user!: any;
 
   @OneToOne("Order", "invoice")
   @JoinColumn({ name: "orderId" })
-  order!: Order;
+  order!: any;
 }

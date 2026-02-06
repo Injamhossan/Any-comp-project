@@ -5,15 +5,16 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
 import { getDb } from "@/lib/db"
 import { User } from "@/entities/User"
+import { Account } from "@/entities/Account"
+import { Session } from "@/entities/Session"
+import { VerificationToken } from "@/entities/VerificationToken"
 import bcrypt from "bcryptjs"
 
 export const authOptions: NextAuthOptions = {
-  // TypeORMAdapter can take the DataSource configuration directly or a DataSource instance
-  // Since getDb is async, we might need a workaround if adapter doesn't support async initialization easily in this version
-  // Actually, TypeORMAdapter usually takes the DB connection options.
   adapter: TypeORMAdapter({
     type: "postgres",
     url: process.env.DATABASE_URL,
+    entities: [User, Account, Session, VerificationToken],
     synchronize: false,
   }),
   session: {

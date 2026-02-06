@@ -23,6 +23,18 @@ const nextConfig: NextConfig = {
       }
     ],
   },
+  // Ensure class names are preserved for TypeORM metadata
+  webpack: (config, { isServer }) => {
+    if (config.optimization && config.optimization.minimizer) {
+      config.optimization.minimizer.forEach((minimizer: any) => {
+        if (minimizer.options && minimizer.options.terserOptions) {
+          minimizer.options.terserOptions.keep_classnames = true;
+          minimizer.options.terserOptions.keep_fnames = true;
+        }
+      });
+    }
+    return config;
+  }
 };
 
 export default nextConfig;

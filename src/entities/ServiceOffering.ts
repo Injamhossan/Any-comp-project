@@ -1,7 +1,5 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from "typeorm";
-import type { Specialist } from "./Specialist";
-import type { ServiceOfferingMasterList } from "./ServiceOfferingMasterList";
 
 @Entity("service_offerings", { name: "ServiceOffering" })
 export class ServiceOffering {
@@ -25,9 +23,9 @@ export class ServiceOffering {
 
   @ManyToOne("Specialist", "service_offerings", { onDelete: "CASCADE" })
   @JoinColumn({ name: "specialist_id" })
-  specialist!: Specialist;
+  specialist!: any;
 
   @ManyToOne("ServiceOfferingMasterList", "service_offerings", { onDelete: "CASCADE" })
   @JoinColumn({ name: "service_offerings_master_list_id" })
-  master_list_item!: ServiceOfferingMasterList;
+  master_list_item!: any;
 }

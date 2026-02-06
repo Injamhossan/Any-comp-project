@@ -1,6 +1,5 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from "typeorm";
-import type { ServiceOffering } from "@/entities/ServiceOffering";
 
 @Entity("service_offerings_master_list", { name: "ServiceOfferingMasterList" })
 export class ServiceOfferingMasterList {
@@ -26,5 +25,5 @@ export class ServiceOfferingMasterList {
   updated_at!: Date;
 
   @OneToMany("ServiceOffering", "master_list_item")
-  service_offerings!: ServiceOffering[];
+  service_offerings!: any[];
 }

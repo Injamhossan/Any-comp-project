@@ -1,6 +1,5 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from "typeorm";
-import type { User } from "@/entities/User";
 
 @Entity("sessions", { name: "Session" })
 export class Session {
@@ -18,5 +17,5 @@ export class Session {
 
   @ManyToOne("User", "sessions", { onDelete: "CASCADE" })
   @JoinColumn({ name: "userId" })
-  user!: User;
+  user!: any;
 }

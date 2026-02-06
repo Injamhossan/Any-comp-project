@@ -1,8 +1,5 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn } from "typeorm";
-import type { Media } from "@/entities/Media";
-import type { ServiceOffering } from "@/entities/ServiceOffering";
-import type { Order } from "@/entities/Order";
 
 export enum VerificationStatus {
   PENDING = "PENDING",
@@ -91,11 +88,11 @@ export class Specialist {
   deleted_at!: Date | null;
 
   @OneToMany("Media", "specialist")
-  media!: Media[];
+  media!: any[];
 
   @OneToMany("ServiceOffering", "specialist")
-  service_offerings!: ServiceOffering[];
+  service_offerings!: any[];
 
   @OneToMany("Order", "specialist")
-  orders!: Order[];
+  orders!: any[];
 }

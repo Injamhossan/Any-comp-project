@@ -1,6 +1,5 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from "typeorm";
-import type { User } from "./User";
 
 @Entity("accounts", { name: "Account" })
 export class Account {
@@ -42,5 +41,5 @@ export class Account {
 
   @ManyToOne("User", "accounts", { onDelete: "CASCADE" })
   @JoinColumn({ name: "userId" })
-  user!: User;
+  user!: any;
 }
