@@ -604,11 +604,35 @@ function CreateSpecialistContent() {
 
             {/* RIGHT SIDE: EDIT PANEL */}
             <div className="w-[400px] bg-white border-l border-gray-200 h-screen overflow-y-auto sticky top-0 flex flex-col shadow-xl">
-                <div className="flex items-center justify-between p-6 border-b border-gray-100">
-                    <h2 className="text-xl font-bold text-gray-900">Edit Service</h2>
-                    <button onClick={() => router.back()} className="text-gray-400 hover:text-gray-600">
-                        <X className="h-5 w-5" />
-                    </button>
+                <div className="flex items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-white z-20">
+                    <div className="flex items-center gap-3">
+                        <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                            <X className="h-5 w-5 text-gray-500" />
+                        </button>
+                        <h2 className="text-xl font-bold text-gray-900">Edit Service</h2>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => router.back()}
+                            className="px-3 py-1.5 border border-gray-300 text-gray-700 text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={() => submitToBackend(true)}
+                            disabled={isSubmitting || uploading.some(u => u)}
+                            className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 text-xs font-semibold rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                        >
+                            {isSubmitting ? "Saving..." : "Draft"}
+                        </button>
+                        <button
+                            onClick={() => submitToBackend(false)}
+                            disabled={isSubmitting || uploading.some(u => u)}
+                            className="px-3 py-1.5 bg-[#0e2a6d] text-white text-xs font-semibold rounded-lg hover:bg-[#002f70] disabled:opacity-50 transition-colors"
+                        >
+                            {isSubmitting ? "..." : "Publish"}
+                        </button>
+                    </div>
                 </div>
 
                 <div className="p-6 space-y-6 flex-1">
@@ -902,22 +926,7 @@ function CreateSpecialistContent() {
 
                 </div>
 
-                <div className="p-6 border-t border-gray-100 bg-gray-50 flex items-center justify-between gap-3 sticky bottom-0 z-10">
-                    <button
-                        onClick={() => submitToBackend(true)}
-                        disabled={isSubmitting || uploading.some(u => u)}
-                        className="flex-1 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50 disabled:opacity-50"
-                    >
-                        {isSubmitting ? "Saving..." : "Save Draft"}
-                    </button>
-                    <button
-                        onClick={() => submitToBackend(false)}
-                        disabled={isSubmitting || uploading.some(u => u)}
-                        className="flex-1 px-4 py-2 bg-[#0e2a6d] text-white text-sm font-medium rounded-md hover:bg-[#002f70] disabled:opacity-50"
-                    >
-                        {isSubmitting ? "Publishing..." : "Publish"}
-                    </button>
-                </div>
+                <div className="pb-20"></div>
             </div>
         </div>
     );

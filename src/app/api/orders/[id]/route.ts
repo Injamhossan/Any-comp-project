@@ -29,3 +29,27 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ success: false, message: error.message || "Internal Error" }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    if (!id) {
+        return NextResponse.json({ success: false, message: "Missing ID" }, { status: 400 });
+    }
+
+    const db = await getDb();
+    const repo = db.getRepository(Order);
+    
+    const order = await repo.findOne({ where: { id } });
+    if (!order) {
+        return NextResponse.json({ success: false, message: "Order not found" }, { status: 404 });
+    }
+
+    await repo.remove(order);
+
+    return NextResponse.json({ success: true, message: "Order deleted successfully" });
+  } catch (error: any) {
+    console.error("Order Deletion Failed:", error);
+    return NextResponse.json({ success: false, message: error.message || "Internal Error" }, { status: 500 });
+  }
+}

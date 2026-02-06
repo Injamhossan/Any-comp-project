@@ -5,6 +5,8 @@ import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import SpecialistCard from "@/components/cards/SpecialistCard";
 import { ChevronRight, Home, ChevronDown } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 // Interface matching the backend response
 interface Specialist {
@@ -24,7 +26,10 @@ interface Specialist {
   created_at?: string;
 }
 
-export default function Page() {
+function SpecialistsContent() {
+    const searchParams = useSearchParams();
+    const searchQuery = searchParams.get("search") || "";
+    
     const [specialists, setSpecialists] = useState<Specialist[]>([]);
     const [loading, setLoading] = useState(true);
     const [openFilter, setOpenFilter] = useState<string | null>(null);
@@ -63,6 +68,15 @@ export default function Page() {
     // Derived state for filtering and sorting
     const processedSpecialists = [...specialists]
         .filter(s => {
+             // Search filter
+             if (searchQuery) {
+                 const searchLower = searchQuery.toLowerCase();
+                 const matchesTitle = s.title.toLowerCase().includes(searchLower);
+                 const matchesCompany = s.secretary_company?.toLowerCase().includes(searchLower);
+                 const matchesDescription = s.description.toLowerCase().includes(searchLower);
+                 if (!matchesTitle && !matchesCompany && !matchesDescription) return false;
+             }
+
              if (!priceRange) return true;
              return s.final_price >= priceRange[0] && s.final_price <= priceRange[1];
         })
@@ -211,6 +225,14 @@ export default function Page() {
       </main>
     </div>
   );
+}
+
+export default function Page() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center">Loading...</div>}>
+            <SpecialistsContent />
+        </Suspense>
+    );
 }
 
 

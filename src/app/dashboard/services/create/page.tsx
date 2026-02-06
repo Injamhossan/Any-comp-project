@@ -23,7 +23,8 @@ export default function CreateServicePage() {
       description: "",
       basePrice: 0,
       duration: 1,
-      offerings: [] as {title: string, price: number}[]
+      offerings: [] as {title: string, price: number}[],
+      certifications: [] as string[]
   });
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [images, setImages] = useState<string[]>([]);
@@ -61,7 +62,8 @@ export default function CreateServicePage() {
                             description: existing.description.split("[Additional Offerings JSON]:")[0].trim(),
                             basePrice: existing.base_price,
                             duration: existing.duration_days,
-                            offerings: existing.additional_offerings || []
+                            offerings: existing.additional_offerings || [],
+                            certifications: existing.certifications || []
                         });
                         
                         if (existing.description.includes("[Additional Offerings JSON]:")) {
@@ -263,7 +265,8 @@ export default function CreateServicePage() {
             average_rating: 0,
             is_draft: false,
             media_urls: images.filter(Boolean),
-            additional_offerings: formData.offerings // Save nicely to JSON column
+            additional_offerings: formData.offerings, // Save nicely to JSON column
+            certifications: formData.certifications
             
           };
 
@@ -318,22 +321,7 @@ export default function CreateServicePage() {
           )}
           
           <div className="flex items-center justify-between w-full">
-            <h1 className="text-2xl font-bold text-gray-900 truncate max-w-2xl">{formData.title}</h1>
-            <div className="flex items-center gap-3">
-                <button 
-                  onClick={() => setIsEditDrawerOpen(true)}
-                  className="px-5 py-2 text-sm font-semibold text-white bg-[#0f172a] rounded-md hover:bg-gray-800 transition-colors">
-                    Edit
-                </button>
-                <button 
-                  onClick={handleSubmit}
-                  disabled={loading || isNotEligible || profileLoading}
-                  className={`px-5 py-2 text-sm font-semibold text-white rounded-md flex items-center gap-2 shadow-sm transition-colors ${loading || isNotEligible || profileLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#0e3a8d] hover:bg-[#002f70]'}`}
-                >
-                    {loading && <Loader2 className="h-4 w-4 animate-spin"/>}
-                    {existingServiceId ? "Update Service" : "Publish"}
-                </button>
-            </div>
+            <h1 className="text-2xl font-bold text-gray-900 truncate max-w-4xl">{formData.title}</h1>
           </div>
       </div>
 
@@ -483,8 +471,8 @@ export default function CreateServicePage() {
                           <div className="space-y-3">
                               <h4 className="text-base font-bold text-gray-900">Certifications</h4>
                               <div className="flex items-center gap-4">
-                                  {profileData?.certifications && profileData.certifications.length > 0 ? (
-                                      profileData.certifications.map((cert: string, i: number) => (
+                                  {formData.certifications && formData.certifications.length > 0 ? (
+                                      formData.certifications.map((cert: string, i: number) => (
                                           <div key={i} className="h-6 min-w-[30px] px-2 bg-gray-100 rounded relative overflow-hidden flex items-center justify-center">
                                               <span className="text-[8px] font-bold text-gray-600">{cert}</span>
                                           </div>
@@ -511,8 +499,26 @@ export default function CreateServicePage() {
       </div>
           
           {/* Sidebar (Right Col) */}
-          <div className="lg:col-span-4 lg:pl-8">
-              <div className="bg-white rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-gray-100 p-8 lg:sticky lg:top-32">
+          <div className="lg:col-span-4 lg:pl-8 space-y-4">
+              {/* Action Buttons above Card */}
+              <div className="flex items-center gap-3 lg:sticky lg:top-32 lg:z-30 bg-white/80 backdrop-blur-sm py-2">
+                <button 
+                    onClick={() => setIsEditDrawerOpen(true)}
+                    className="flex-1 px-8 py-2.5 bg-[#0f172a] text-white text-sm font-bold rounded-lg hover:bg-gray-800 transition-all shadow-sm active:scale-95"
+                >
+                    Edit
+                </button>
+                <button 
+                    onClick={handleSubmit}
+                    disabled={loading || isNotEligible || profileLoading}
+                    className={`flex-1 px-8 py-2.5 text-white text-sm font-bold rounded-lg flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95 ${loading || isNotEligible || profileLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#0e3a8d] hover:bg-[#002f70]'}`}
+                >
+                    {loading && <Loader2 className="h-4 w-4 animate-spin"/>}
+                    Publish
+                </button>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-gray-100 p-8 lg:sticky lg:top-[180px]">
                   <h3 className="text-2xl font-bold text-gray-900 mb-1">Professional Fee</h3>
                   <p className="text-gray-400 text-sm mb-8 font-medium">Set a rate for your service</p>
 
@@ -568,14 +574,34 @@ export default function CreateServicePage() {
           />
           <div className="fixed top-0 right-0 h-full w-full sm:w-[500px] bg-white z-50 shadow-2xl overflow-y-auto transform transition-transform duration-300 ease-in-out">
              <div className="p-6">
-                <div className="flex items-center justify-between mb-8">
-                   <h2 className="text-xl font-bold text-gray-900">Edit Service</h2>
-                   <button 
-                     onClick={() => setIsEditDrawerOpen(false)}
-                     className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                   >
-                     <X className="h-5 w-5 text-gray-500"/>
-                   </button>
+                {/* Header with Buttons at Top */}
+                <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
+                   <div className="flex items-center gap-3">
+                      <button 
+                        onClick={() => setIsEditDrawerOpen(false)}
+                        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                      >
+                        <X className="h-5 w-5 text-gray-500"/>
+                      </button>
+                      <h2 className="text-xl font-bold text-gray-900">Edit Service</h2>
+                   </div>
+                   <div className="flex items-center gap-3">
+                        <button 
+                          onClick={() => setIsEditDrawerOpen(false)}
+                          className="px-4 py-2 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                          onClick={() => {
+                              setIsEditDrawerOpen(false);
+                              handleSubmit(); // Open the publish confirmation popup
+                          }}
+                          className="px-4 py-2 bg-[#0e3a8d] text-white text-sm font-semibold rounded-lg hover:bg-[#002f70] transition-colors"
+                        >
+                            Publish
+                        </button>
+                   </div>
                 </div>
 
                 <div className="space-y-6">
@@ -652,25 +678,79 @@ export default function CreateServicePage() {
                        </div>
                    </div>
 
-                   {/* Price Input */}
-                   <div className="space-y-2">
-                       <label className="text-sm font-bold text-gray-700">Price</label>
-                       <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                             <span className="text-gray-500 text-sm font-medium">RM</span>
-                          </div>
-                          <input 
-                            type="number"
-                            min="0"
-                            value={formData.basePrice}
-                            onChange={(e) => setFormData({...formData, basePrice: parseInt(e.target.value) || 0})}
-                            className="w-full pl-10 p-3 border border-gray-200 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                          />
+                   {/* Certifications Section */}
+                   <div className="space-y-4">
+                       <label className="text-sm font-bold text-gray-700">Certifications</label>
+                       <div className="grid grid-cols-2 gap-3">
+                           {["MAICSA", "SSM", "LS", "MIA"].map((cert) => {
+                               const isChecked = formData.certifications.includes(cert);
+                               return (
+                                   <div 
+                                       key={cert}
+                                       onClick={() => {
+                                           if (isChecked) {
+                                               setFormData({...formData, certifications: formData.certifications.filter(c => c !== cert)});
+                                           } else {
+                                               setFormData({...formData, certifications: [...formData.certifications, cert]});
+                                           }
+                                       }}
+                                       className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all ${isChecked ? 'border-blue-500 bg-blue-50 shadow-sm' : 'border-gray-200 hover:border-gray-300'}`}
+                                   >
+                                       <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isChecked ? 'bg-blue-600 border-blue-600' : 'border-gray-300'}`}>
+                                           {isChecked && <Check className="h-3.5 w-3.5 text-white" strokeWidth={4} />}
+                                       </div>
+                                       <span className={`text-sm font-medium ${isChecked ? 'text-blue-900' : 'text-gray-700'}`}>{cert}</span>
+                                   </div>
+                               );
+                           })}
                        </div>
                    </div>
 
+                   {/* Professional Fee Section in Drawer */}
+                   <div className="bg-white rounded-lg border border-gray-100 p-6 shadow-sm">
+                       <h3 className="text-xl font-bold text-gray-900 mb-1">Professional Fee</h3>
+                       <p className="text-gray-400 text-xs mb-6 font-medium">Set a rate for your service</p>
+
+                       <div className="mb-8">
+                            <div className="flex items-baseline border-b-2 border-black pb-1">
+                                <span className="text-2xl font-medium text-gray-900 mr-2">RM</span>
+                                <input 
+                                   type="text"
+                                   value={formData.basePrice.toLocaleString()}
+                                   onChange={(e) => {
+                                       const val = parseInt(e.target.value.replace(/,/g, '')) || 0;
+                                       setFormData({...formData, basePrice: val});
+                                   }}
+                                   className="w-full text-3xl font-medium text-gray-900 border-none p-0 focus:ring-0 bg-transparent placeholder-gray-300"
+                                />
+                            </div>
+                       </div>
+
+                       <div className="space-y-3">
+                           <div className="flex justify-between items-center text-xs font-medium">
+                               <span className="text-gray-500">Base price</span>
+                               <span className="text-gray-900">RM {formData.basePrice.toLocaleString()}</span>
+                           </div>
+                           <div className="flex justify-between items-center text-xs font-medium">
+                               <span className="text-gray-500 underline decoration-dotted">Service processing fee</span>
+                               <span className="text-gray-900">RM {processingFee.toLocaleString()}</span>
+                           </div>
+                           <div className="flex justify-between items-center text-xs font-bold pt-2">
+                               <span className="text-gray-900">Total</span>
+                               <span className="text-gray-900">RM {total.toLocaleString()}</span>
+                           </div>
+                                   
+                           <div className="h-[1px] bg-gray-200 my-4 w-full"></div>
+
+                           <div className="flex justify-between items-center pt-1">
+                               <span className="text-xs font-medium text-gray-500">Your returns</span>
+                               <span className="text-base font-bold text-gray-900">RM {formData.basePrice.toLocaleString()}</span>
+                           </div>
+                       </div>    
+                   </div>
+
                    {/* Additional Offerings Manager */}
-                   <div className="space-y-3 pt-4 border-t border-gray-100">
+                   <div className="space-y-3 pt-4 border-t border-gray-100 pb-20">
                        <label className="text-sm font-bold text-gray-700">Additional Offerings</label>
                        
                        {/* Dropdown Selection */}
@@ -749,21 +829,6 @@ export default function CreateServicePage() {
                        </div>
                    </div>
                 </div>
-
-                <div className="mt-10 flex items-center gap-3 pt-6 border-t border-gray-100">
-                    <button 
-                      onClick={() => setIsEditDrawerOpen(false)}
-                      className="flex-1 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                        Cancel
-                    </button>
-                    <button 
-                      onClick={() => setIsEditDrawerOpen(false)}
-                      className="flex-1 px-4 py-2.5 bg-[#0f172a] text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-colors"
-                    >
-                        Confirm
-                    </button>
-                </div>
              </div>
           </div>
         </>
@@ -773,24 +838,26 @@ export default function CreateServicePage() {
       {isConfirmOpen && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
               <div 
-                  className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                  className="absolute inset-0 bg-black/50 backdrop-blur-sm"
                   onClick={() => setIsConfirmOpen(false)}
               ></div>
-              <div className="relative bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                  <div className="p-6">
-                      <div className="flex items-start gap-4 mb-4">
-                          <div className="flex-shrink-0 p-2 bg-blue-50 rounded-full">
-                              <div className="bg-[#0e2a6d] w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold">!</div>
+              <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-[550px] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                  <div className="p-8">
+                      <div className="flex items-center gap-4 mb-3">
+                          <div className="flex-shrink-0 w-10 h-10 bg-[#002f70] rounded-full flex items-center justify-center">
+                              <span className="text-white text-2xl font-bold">!</span>
                           </div>
-                          <div>
-                              <h3 className="text-lg font-bold text-gray-900">Submit for Approval</h3>
-                              <p className="text-sm text-gray-500 mt-1">Your service will be submitted for admin approval. Once approved, it will be published to the marketplace.</p>
-                          </div>
+                          <h3 className="text-3xl font-bold text-gray-900 tracking-tight">Publish changes</h3>
                       </div>
-                      <div className="flex items-center gap-3 pt-2">
+                      
+                      <div className="ml-14">
+                          <p className="text-lg text-gray-600 font-medium">Do you want to publish these changes? It will appear in the marketplace listing</p>
+                      </div>
+
+                      <div className="flex items-center justify-end gap-3 pt-10">
                           <button 
                               onClick={() => setIsConfirmOpen(false)}
-                              className="flex-1 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 text-sm font-bold rounded-lg hover:bg-gray-50 transition-colors"
+                              className="px-8 py-3 bg-white border border-gray-400 text-gray-900 text-base font-bold rounded-lg hover:bg-gray-50 transition-colors"
                           >
                               Continue Editing
                           </button>
@@ -799,7 +866,7 @@ export default function CreateServicePage() {
                                   setIsConfirmOpen(false);
                                   handleSubmitConfirmed();
                               }}
-                              className="flex-1 px-4 py-2.5 bg-[#0e2a6d] text-white text-sm font-bold rounded-lg hover:bg-[#002f70] transition-colors"
+                              className="px-8 py-3 bg-[#002f70] text-white text-base font-bold rounded-lg hover:bg-[#001f5c] transition-colors"
                           >
                               Save changes
                           </button>

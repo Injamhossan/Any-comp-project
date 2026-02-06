@@ -187,10 +187,23 @@ export default function ServiceDetailsPage() {
 
                          {/* Additional Offerings Section (Rendered from DB or parsed from legacy description) */}
                          {(() => {
-                             let offerings: any[] = service.additional_offerings || [];
+                             let offerings: any[] = [];
                              
-                             // Fallback: Try to parse from description if DB column is empty
-                             if ((!offerings || offerings.length === 0) && service.description?.includes("[Additional Offerings JSON]:")) {
+                             // 1. Try mapping from relation (service_offerings)
+                             if (service.service_offerings && service.service_offerings.length > 0) {
+                                 offerings = service.service_offerings.map((so: any) => ({
+                                     title: so.master_list_item?.title || so.title || "Offering",
+                                     price: Number(so.price) || 0
+                                 }));
+                             }
+                             
+                             // 2. Fallback: Try JSON column
+                             else if (service.additional_offerings && service.additional_offerings.length > 0) {
+                                 offerings = service.additional_offerings;
+                             }
+                             
+                             // 3. Fallback: Parse from legacy description
+                             else if (service.description?.includes("[Additional Offerings JSON]:")) {
                                  try {
                                      const jsonPart = service.description.split("[Additional Offerings JSON]:")[1];
                                      offerings = JSON.parse(jsonPart);
@@ -201,11 +214,11 @@ export default function ServiceDetailsPage() {
 
                              if (offerings && offerings.length > 0) {
                                  return (
-                                     <div className="mt-8 pt-8 border-t border-gray-100">
-                                         <h3 className="text-lg font-bold text-gray-900 mb-4">Additional Offerings Included</h3>
+                                     <div className="mt-8 pt-8 border-t border-gray-100 italic">
+                                         <h3 className="text-lg font-bold text-gray-900 mb-4 not-italic">Additional Offerings Included</h3>
                                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                              {offerings.map((offer: any, idx: number) => (
-                                                 <div key={idx} className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                                 <div key={idx} className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100 not-italic">
                                                      <div className="mt-1 h-5 w-5 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 flex-shrink-0">
                                                          <CheckCircle className="h-3 w-3" />
                                                      </div>

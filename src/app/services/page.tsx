@@ -1,25 +1,40 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Link from "next/link";
-import { FileSpreadsheet, Building2, Scale, Calculator, ArrowRight } from "lucide-react";
+import { Building2, ArrowRight } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
-export default function ServicesPage() {
-  const [services, setServices] = React.useState<any[]>([]);
-  const [loading, setLoading] = React.useState(true);
+function ServicesContent() {
+  const [services, setServices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("search") || "";
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetch('/api/specialists')
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          setServices(data.data);
+          // Filter out unverified/drafts for consistency with home page
+          const published = data.data.filter((s: any) => !s.is_draft && s.verification_status === "VERIFIED");
+          setServices(published);
         }
       })
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
   }, []);
+
+  const filteredServices = services.filter(s => {
+      if (!searchQuery) return true;
+      const searchLower = searchQuery.toLowerCase();
+      return (
+          s.title.toLowerCase().includes(searchLower) ||
+          s.description.toLowerCase().includes(searchLower) ||
+          s.secretary_company?.toLowerCase().includes(searchLower)
+      );
+  });
 
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900">
@@ -27,33 +42,42 @@ export default function ServicesPage() {
 
       <main className="container mx-auto px-4 py-16 sm:px-6 lg:px-8">
          <div className="text-center max-w-2xl mx-auto mb-16">
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900 mb-4">Our Services</h1>
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900 mb-4">
+                {searchQuery ? `Search Results for "${searchQuery}"` : "Our Services"}
+            </h1>
             <p className="text-lg text-gray-500">
-               We offer a comprehensive suite of corporate services to help you manage and grow your business in Malaysia.
+               {searchQuery 
+                ? `Found ${filteredServices.length} services matching your search.`
+                : "We offer a comprehensive suite of corporate services to help you manage and grow your business in Malaysia."}
             </p>
          </div>
 
          {loading ? (
              <div className="flex justify-center p-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div></div>
+         ) : filteredServices.length === 0 ? (
+             <div className="text-center py-20 border-2 border-dashed border-gray-100 rounded-3xl">
+                 <p className="text-gray-400">No services found matching your criteria.</p>
+                 <Link href="/services" className="text-blue-600 mt-4 inline-block font-bold">View All Services</Link>
+             </div>
          ) : (
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-8 max-w-5xl mx-auto">
-                {services.map((service, index) => (
+                {filteredServices.map((service, index) => (
                    <Link 
                       key={index} 
                       href={`/services/${service.slug}`}
                       className="group relative bg-white border border-gray-200 rounded-2xl p-8 hover:shadow-lg transition-all duration-300 flex flex-col z-10 cursor-pointer"
                    >
-                      <div className={`inline-flex items-center justify-center p-3 rounded-xl bg-blue-600 mb-6 w-fit pointer-events-none`}>
+                      <div className={`inline-flex items-center justify-center p-3 rounded-xl bg-blue-600 mb-6 w-fit`}>
                          <Building2 className="h-6 w-6 text-white" />
                       </div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-indigo-600 transition-colors pointer-events-none">
+                      <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-indigo-600 transition-colors">
                          {service.title}
                       </h3>
-                      <p className="text-gray-600 mb-6 flex-grow line-clamp-3 pointer-events-none">
+                      <p className="text-gray-600 mb-6 flex-grow line-clamp-3">
                          {service.description}
                       </p>
                       
-                      <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-100 pointer-events-none">
+                      <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-100">
                           <span className="font-bold text-lg">RM {Number(service.final_price || service.base_price).toLocaleString()}</span>
                           <span className="inline-flex items-center text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
                              View Details <ArrowRight className="ml-2 h-4 w-4" />
@@ -64,16 +88,26 @@ export default function ServicesPage() {
              </div>
          )}
          
-         <div className="mt-20 bg-gray-900 rounded-3xl p-10 md:p-16 text-center text-white max-w-5xl mx-auto">
-             <h2 className="text-3xl font-bold mb-4">Looking for something else?</h2>
-             <p className="text-gray-400 mb-8 max-w-lg mx-auto">
-                 We also support audit coordination, trademark registration, and visa applications.
-             </p>
-             <button className="bg-white text-gray-900 px-8 py-3 rounded-full font-bold hover:bg-gray-100 transition">
-                 Contact Support
-             </button>
-         </div>
+         {!searchQuery && (
+            <div className="mt-20 bg-gray-900 rounded-3xl p-10 md:p-16 text-center text-white max-w-5xl mx-auto">
+                <h2 className="text-3xl font-bold mb-4">Looking for something else?</h2>
+                <p className="text-gray-400 mb-8 max-w-lg mx-auto">
+                    We also support audit coordination, trademark registration, and visa applications.
+                </p>
+                <button className="bg-white text-gray-900 px-8 py-3 rounded-full font-bold hover:bg-gray-100 transition">
+                    Contact Support
+                </button>
+            </div>
+         )}
       </main>
     </div>
   );
+}
+
+export default function ServicesPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center">Loading...</div>}>
+            <ServicesContent />
+        </Suspense>
+    );
 }

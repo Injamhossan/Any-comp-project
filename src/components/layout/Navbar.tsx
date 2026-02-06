@@ -3,12 +3,24 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Search, Mail, Bell, User, ChevronDown, LogOut, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 export default function Navbar() {
   const { user, loading, logout } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
+
+  const handleSearch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/?search=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      router.push('/');
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -67,16 +79,24 @@ export default function Navbar() {
         {/* Right Side: Search & Icons */}
         <div className="flex items-center gap-4">
           {/* Search Bar */}
-          <div className="relative hidden lg:block">
+          <form 
+            onSubmit={handleSearch}
+            className="relative hidden lg:block"
+          >
             <input
               type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search for any services"
               className="h-9 w-64 rounded bg-gray-50 border border-gray-200 px-3 pr-10 text-sm text-gray-700 focus:border-gray-300 focus:outline-none placeholder:text-gray-400"
             />
-            <button className="absolute right-0 top-0 flex h-9 w-9 items-center justify-center rounded-r bg-[#1e2b4d] text-white">
+            <button 
+              type="submit"
+              className="absolute right-0 top-0 flex h-9 w-9 items-center justify-center rounded-r bg-[#1e2b4d] text-white"
+            >
               <Search className="h-4 w-4" />
             </button>
-          </div>
+          </form>
 
           <div className="flex items-center gap-4 border-l border-gray-200 pl-4">
             {!loading ? (
