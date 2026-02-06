@@ -1,6 +1,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
+import { User, UserRole } from "@/entities/User";
+import { CompanyRegistration, RegistrationStatus } from "@/entities/CompanyRegistration";
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,25 +14,21 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Email required" }, { status: 400 });
     }
 
-    // Cast prisma to any to avoid TS errors if client generation failed
-    const db = prisma as any;
+    const db = await getDb();
+    const userRepo = db.getRepository(User);
 
-    // Find User
-    let user = await db.user.findUnique({
+    let user = await userRepo.findOne({
       where: { email },
-      include: { registrations: true }
+      relations: ["registrations"]
     });
 
     if (!user) {
-       // Create User Sync
-       user = await db.user.create({
-         data: { 
+       user = userRepo.create({ 
             email,
             name: name || email.split('@')[0],
-            role: 'USER'
-         }
+            role: UserRole.USER
        });
-       // Return empty registrations
+       await userRepo.save(user);
        return NextResponse.json({ success: true, data: [] });
     }
 
@@ -51,20 +49,20 @@ export async function POST(req: NextRequest) {
            return NextResponse.json({ success: false, message: "Missing fields" }, { status: 400 });
       }
 
-      const db = prisma as any;
+      const db = await getDb();
+      const userRepo = db.getRepository(User);
+      const regRepo = db.getRepository(CompanyRegistration);
       
-            // Ensure user exists and verify single registration
-      let user = await db.user.findUnique({ 
+      let user = await userRepo.findOne({ 
           where: { email },
-          include: { registrations: true }
+          relations: ["registrations"]
       });
       
       if (!user) {
-          user = await db.user.create({ data: { email, role: 'USER' } });
+          user = userRepo.create({ email, role: UserRole.USER });
+          await userRepo.save(user);
       }
 
-      // Check if user already has ANY registration (PENDING, APPROVED, etc.)
-      // We explicitly deny multiple registrations per user.
       if (user.registrations && user.registrations.length > 0) {
           return NextResponse.json({ 
               success: false, 
@@ -72,23 +70,20 @@ export async function POST(req: NextRequest) {
           }, { status: 400 });
       }
 
-      const registration = await db.companyRegistration.create({
-          data: {
-              userId: user.id,
-              companyName,
-              companyType,
-              companyLogoUrl, 
-              status: 'PENDING'
-          }
+      const registration = regRepo.create({
+          userId: user.id,
+          companyName,
+          companyType,
+          companyLogoUrl, 
+          status: RegistrationStatus.PENDING
       });
+      
+      await regRepo.save(registration);
 
       // Update User Profile with company info for easier access
-      await db.user.update({
-          where: { id: user.id },
-          data: {
-              company_name: companyName,
-              company_logo_url: companyLogoUrl
-          }
+      await userRepo.update(user.id, {
+          company_name: companyName,
+          company_logo_url: companyLogoUrl
       });
 
       return NextResponse.json({ success: true, data: registration });

@@ -1,9 +1,9 @@
 
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
+import { User, UserRole } from "@/entities/User";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 
-// Handle user registration securely
 export async function POST(req: Request) {
   try {
     const { name, email, password } = await req.json();
@@ -12,7 +12,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Missing email or password" }, { status: 400 });
     }
 
-    const exists = await prisma.user.findUnique({
+    const db = await getDb();
+    const userRepository = db.getRepository(User);
+
+    const exists = await userRepository.findOne({
       where: { email }
     });
 
@@ -22,14 +25,14 @@ export async function POST(req: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role: "USER"
-      }
+    const user = userRepository.create({
+      name,
+      email,
+      password: hashedPassword,
+      role: UserRole.USER
     });
+
+    await userRepository.save(user);
 
     return NextResponse.json({ 
         success: true,

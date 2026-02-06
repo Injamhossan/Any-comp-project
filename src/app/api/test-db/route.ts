@@ -1,13 +1,14 @@
+
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/db';
+import { getDb } from '@/lib/db';
+import { Specialist } from '@/entities/Specialist';
 
 export async function GET() {
   try {
-    // Test the database connection
-    const result: any = await prisma.$queryRaw`SELECT NOW()`;
+    const db = await getDb();
+    const result = await db.query("SELECT NOW()");
     
-      
-    const count = await prisma.specialist.count();
+    const count = await db.getRepository(Specialist).count();
     
     return NextResponse.json({ 
       status: 'success', 

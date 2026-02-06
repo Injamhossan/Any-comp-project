@@ -1,39 +1,48 @@
 
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
+import { Message } from "@/entities/Message";
+import { Invoice, InvoiceStatus } from "@/entities/Invoice";
+import { Document } from "@/entities/Document";
+import { Order } from "@/entities/Order";
+import { User, UserRole } from "@/entities/User";
 
 export async function GET() {
   try {
+    const db = await getDb();
+    
     const [messages, invoices, documents, ordersCount, clientsCount, recentOrders] = await Promise.all([
-      prisma.message.findMany({ 
+      db.getRepository(Message).find({ 
           take: 5, 
-          orderBy: { createdAt: 'desc' } 
+          order: { createdAt: 'DESC' } 
       }),
-      prisma.invoice.findMany({ 
+      db.getRepository(Invoice).find({ 
           take: 5, 
-          orderBy: { createdAt: 'desc' },
-          include: { user: true }
+          order: { createdAt: 'DESC' },
+          relations: ["user"]
       }),
-      prisma.document.findMany({
+      db.getRepository(Document).find({
           take: 5,
-          orderBy: { createdAt: 'desc' },
-          include: { user: true }
+          order: { createdAt: 'DESC' },
+          relations: ["user"]
       }),
-      prisma.order.count(),
-      prisma.user.count({ where: { role: 'USER' } }),
-      prisma.order.findMany({
+      db.getRepository(Order).count(),
+      db.getRepository(User).count({ where: { role: UserRole.USER } }),
+      db.getRepository(Order).find({
         take: 5,
-        orderBy: { createdAt: 'desc' },
-        include: { user: true, specialist: true }
+        order: { createdAt: 'DESC' },
+        relations: ["user", "specialist"]
       })
     ]);
     
     // Calculate total revenue
-    const revenueAggregation = await prisma.invoice.aggregate({
-        _sum: { amount: true },
-        where: { status: 'PAID' }
-    });
-    const totalRevenue = revenueAggregation._sum.amount || 0;
+    const revenueResult = await db.getRepository(Invoice)
+        .createQueryBuilder("invoice")
+        .select("SUM(invoice.amount)", "sum")
+        .where("invoice.status = :status", { status: InvoiceStatus.PAID })
+        .getRawOne();
+        
+    const totalRevenue = parseFloat(revenueResult?.sum || "0");
 
     const stats = {
         totalClients: clientsCount,

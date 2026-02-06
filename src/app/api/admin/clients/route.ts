@@ -1,23 +1,16 @@
 
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
+import { CompanyRegistration } from "@/entities/CompanyRegistration";
 
 export async function GET(req: NextRequest) {
   try {
-    const db = prisma as any;
+    const db = await getDb();
     
-    const registrations = await db.companyRegistration.findMany({
-        include: {
-            user: {
-                select: {
-                    name: true,
-                    email: true,
-                    image: true
-                }
-            }
-        },
-        orderBy: {
-            createdAt: 'desc'
+    const registrations = await db.getRepository(CompanyRegistration).find({
+        relations: ["user"],
+        order: {
+            createdAt: 'DESC'
         }
     });
 
@@ -38,11 +31,11 @@ export async function PATCH(req: NextRequest) {
             return NextResponse.json({ success: false, message: "Missing id or status" }, { status: 400 });
         }
 
-        const db = prisma as any;
-        const updated = await db.companyRegistration.update({
-            where: { id },
-            data: { status }
-        });
+        const db = await getDb();
+        const repo = db.getRepository(CompanyRegistration);
+        
+        await repo.update(id, { status });
+        const updated = await repo.findOne({ where: { id } });
 
         return NextResponse.json({ success: true, data: updated });
     } catch (error: any) {

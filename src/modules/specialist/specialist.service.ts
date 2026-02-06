@@ -1,105 +1,98 @@
-import { Specialist, MediaType, MimeType } from "@prisma/client";
-import prisma from "@/lib/db"; 
+
+import { getDb } from "@/lib/db";
+import { Specialist, VerificationStatus } from "@/entities/Specialist";
+import { Media, MediaType, MimeType } from "@/entities/Media";
+import { IsNull, DeepPartial } from "typeorm";
 
 // Helper to construct media create input
-const prepareMediaCreate = (urls: string[]) => {
-  return {
-    create: urls.map((url, index) => ({
-      file_name: url.split('/').pop() || `image-${index}`,
-      file_size: 0,
-      display_order: index,
-      url: url,
-      media_type: MediaType.IMAGE,
-      mime_type: MimeType.IMAGE_JPEG,
-    }))
-  };
-};
-
-export const createSpecialist = async (data: any): Promise<Specialist> => {
-  const { media_urls, ...rest } = data;
-  
-  const createData: any = { ...rest };
-  if (media_urls && Array.isArray(media_urls)) {
-      createData.media = prepareMediaCreate(media_urls);
-  }
-
-  return await prisma.specialist.create({
-    data: createData,
+const prepareMediaCreate = (urls: string[], specialistId?: string) => {
+  return urls.map((url, index) => {
+    const media = new Media();
+    media.file_name = url.split('/').pop() || `image-${index}`;
+    media.file_size = 0;
+    media.display_order = index;
+    media.url = url;
+    media.media_type = MediaType.IMAGE;
+    media.mime_type = MimeType.IMAGE_JPEG;
+    if (specialistId) media.specialist_id = specialistId;
+    return media;
   });
 };
 
-export const getAllSpecialists = async (includeUnverified = false): Promise<Specialist[]> => {
-  const whereClause: any = { deleted_at: null };
+export const createSpecialist = async (data: any): Promise<Specialist> => {
+  const db = await getDb();
+  const { media, service_offerings, ...rest } = data;
   
-  if (!includeUnverified) {
-      whereClause.verification_status = "VERIFIED";
-      whereClause.is_draft = false; // Strict check: Must not be draft
+  const specialist = db.getRepository(Specialist).create(rest as DeepPartial<Specialist>);
+  const savedSpecialist = await db.getRepository(Specialist).save(specialist);
+
+  if (media && media.create) {
+      const mediaRepo = db.getRepository(Media);
+      const mediaToCreate = media.create.map((m: any) => mediaRepo.create({ ...m, specialist_id: savedSpecialist.id }));
+      await mediaRepo.save(mediaToCreate);
   }
 
-  return await prisma.specialist.findMany({
+  // Handle service offerings if they are in the data (simplified for now to match prisma structure if provided)
+  if (service_offerings && service_offerings.create) {
+      const { ServiceOffering } = await import("@/entities/ServiceOffering");
+      const offeringRepo = db.getRepository(ServiceOffering);
+      const offeringsToCreate = service_offerings.create.map((so: any) => offeringRepo.create({ ...so, specialist_id: savedSpecialist.id }));
+      await offeringRepo.save(offeringsToCreate);
+  }
+
+  return savedSpecialist;
+};
+
+export const getAllSpecialists = async (includeUnverified = false): Promise<Specialist[]> => {
+  const db = await getDb();
+  const whereClause: any = { deleted_at: IsNull() };
+  
+  if (!includeUnverified) {
+      whereClause.verification_status = VerificationStatus.VERIFIED;
+      whereClause.is_draft = false;
+  }
+
+  return await db.getRepository(Specialist).find({
     where: whereClause,
-    include: { media: true },
-    orderBy: { created_at: 'desc' } // Good practice to order by newest
+    relations: ["media"],
+    order: { created_at: 'DESC' }
   });
 };
 
 export const getSpecialistById = async (id: string): Promise<Specialist | null> => {
-  return await prisma.specialist.findUnique({
+  const db = await getDb();
+  return await db.getRepository(Specialist).findOne({
     where: { id },
-    include: { 
-      media: true, 
-      service_offerings: {
-        include: {
-          master_list_item: true
-        }
-      } 
-    },
+    relations: ["media", "service_offerings", "service_offerings.master_list_item"],
   });
 };
 
 export const getSpecialistBySlug = async (slug: string): Promise<Specialist | null> => {
-  return await prisma.specialist.findUnique({
+  const db = await getDb();
+  return await db.getRepository(Specialist).findOne({
     where: { slug },
-    include: { 
-      media: true, 
-      service_offerings: {
-        include: {
-          master_list_item: true
-        }
-      } 
-    },
+    relations: ["media", "service_offerings", "service_offerings.master_list_item"],
   });
 };
 
 export const getSpecialistByOwner = async (email: string, name?: string): Promise<Specialist | null> => {
-   // 1. Search by Email (More reliable)
+    const db = await getDb();
+    const repo = db.getRepository(Specialist);
+
+   // 1. Search by Email
    if (email) {
-       const byEmail = await prisma.specialist.findFirst({
-           where: { secretary_email: email, deleted_at: null },
-           include: { 
-             media: true,
-             service_offerings: {
-               include: {
-                 master_list_item: true
-               }
-             }
-           }
+       const byEmail = await repo.findOne({
+           where: { secretary_email: email, deleted_at: IsNull() },
+           relations: ["media", "service_offerings", "service_offerings.master_list_item"]
        });
        if (byEmail) return byEmail;
    }
 
    // 2. Fallback: Search by Name
    if (name) {
-       const byName = await prisma.specialist.findFirst({
-           where: { secretary_name: name, deleted_at: null },
-           include: { 
-             media: true,
-             service_offerings: {
-               include: {
-                 master_list_item: true
-               }
-             }
-           }
+       const byName = await repo.findOne({
+           where: { secretary_name: name, deleted_at: IsNull() },
+           relations: ["media", "service_offerings", "service_offerings.master_list_item"]
        });
        if (byName) return byName;
    }
@@ -108,26 +101,35 @@ export const getSpecialistByOwner = async (email: string, name?: string): Promis
 
 
 export const updateSpecialist = async (id: string, data: any): Promise<Specialist> => {
-  const { media_urls, ...rest } = data;
+  const db = await getDb();
+  const repo = db.getRepository(Specialist);
+  const { media, service_offerings, ...rest } = data;
 
-  const updateData: any = { ...rest };
-  if (media_urls && Array.isArray(media_urls)) {
-      updateData.media = {
-          deleteMany: {}, // Clear existing media
-          ...prepareMediaCreate(media_urls)
-      };
+  await repo.update(id, rest);
+
+  if (media) {
+      const mediaRepo = db.getRepository(Media);
+      if (media.deleteMany) await mediaRepo.delete({ specialist_id: id });
+      if (media.create) {
+          const mediaToCreate = media.create.map((m: any) => mediaRepo.create({ ...m, specialist_id: id }));
+          await mediaRepo.save(mediaToCreate);
+      }
   }
 
-   return await prisma.specialist.update({
-    where: { id },
-    data: updateData,
-  });
+  if (service_offerings) {
+      const { ServiceOffering } = await import("@/entities/ServiceOffering");
+      const offeringRepo = db.getRepository(ServiceOffering);
+      if (service_offerings.deleteMany) await offeringRepo.delete({ specialist_id: id });
+      if (service_offerings.create) {
+          const offeringsToCreate = service_offerings.create.map((so: any) => offeringRepo.create({ ...so, specialist_id: id }));
+          await offeringRepo.save(offeringsToCreate);
+      }
+  }
+
+  return (await repo.findOne({ where: { id }, relations: ["media"] }))!;
 };
 
-export const deleteSpecialist = async (id: string): Promise<Specialist> => {
-  // Soft delete
-  return await prisma.specialist.update({
-    where: { id },
-    data: { deleted_at: new Date() },
-  });
+export const deleteSpecialist = async (id: string): Promise<any> => {
+  const db = await getDb();
+  return await db.getRepository(Specialist).update(id, { deleted_at: new Date() });
 };

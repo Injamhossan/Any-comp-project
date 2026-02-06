@@ -1,5 +1,7 @@
+
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
+import { FileEntity } from "@/entities/File";
 
 export async function GET(
     req: NextRequest,
@@ -12,7 +14,8 @@ export async function GET(
     }
 
     try {
-        const fileRecord = await prisma.file.findUnique({
+        const db = await getDb();
+        const fileRecord = await db.getRepository(FileEntity).findOne({
             where: { id: id }
         });
 

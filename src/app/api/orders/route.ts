@@ -1,6 +1,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
+import { Order, OrderStatus } from "@/entities/Order";
+import { Specialist } from "@/entities/Specialist";
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,29 +33,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Use a transaction to ensure atomic execution: create order and update service statistics
-    const order = await (prisma as any).$transaction(async (tx: any) => {
-      const newOrder = await tx.order.create({
-        data: {
+    const db = await getDb();
+    const order = await db.manager.transaction(async (transactionalEntityManager) => {
+      const newOrder = transactionalEntityManager.create(Order, {
           specialistId,
           userId: userId || null,
           amount,
-          status: "PENDING",
+          status: OrderStatus.PENDING,
           customerName,
           customerEmail,
           customerPhone,
           requirements,
-        },
       });
+      
+      const savedOrder = await transactionalEntityManager.save(newOrder);
 
-      await tx.specialist.update({
-        where: { id: specialistId },
-        data: {
-          purchase_count: { increment: 1 },
-        },
-      });
+      await transactionalEntityManager.increment(Specialist, { id: specialistId }, "purchase_count", 1);
 
-      return newOrder;
+      return savedOrder;
     });
 
     return NextResponse.json({ success: true, data: order }, { status: 201 });
@@ -78,30 +75,15 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    const db = await getDb();
     const whereClause: any = {};
     if (userId) whereClause.userId = userId;
     if (specialistId) whereClause.specialistId = specialistId;
 
-    const orders = await (prisma as any).order.findMany({
+    const orders = await db.getRepository(Order).find({
       where: whereClause,
-      include: {
-        specialist: {
-          select: {
-            title: true,
-            secretary_name: true,
-            secretary_company: true,
-            avatar_url: true,
-            slug: true,
-          },
-        },
-        user: {
-          select: {
-            name: true,
-            email: true,
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
+      relations: ["specialist", "user"],
+      order: { createdAt: "DESC" },
     });
 
     return NextResponse.json({ success: true, data: orders }, { status: 200 });

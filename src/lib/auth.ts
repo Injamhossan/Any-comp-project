@@ -1,13 +1,21 @@
 
-import { PrismaAdapter } from "@auth/prisma-adapter"
+import { TypeORMAdapter } from "@auth/typeorm-adapter"
 import { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
-import { prisma } from "@/lib/db"
+import { getDb } from "@/lib/db"
+import { User } from "@/entities/User"
 import bcrypt from "bcryptjs"
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  // TypeORMAdapter can take the DataSource configuration directly or a DataSource instance
+  // Since getDb is async, we might need a workaround if adapter doesn't support async initialization easily in this version
+  // Actually, TypeORMAdapter usually takes the DB connection options.
+  adapter: TypeORMAdapter({
+    type: "postgres",
+    url: process.env.DATABASE_URL,
+    synchronize: false,
+  }),
   session: {
     strategy: "jwt"
   },
@@ -30,11 +38,14 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid credentials");
         }
 
-        const user = await prisma.user.findUnique({
+        const db = await getDb();
+        const userRepository = db.getRepository(User);
+
+        const user = await userRepository.findOne({
           where: {
             email: credentials.email
           }
-        }) as any;
+        });
 
         if (!user || !user.password) {
           throw new Error("Invalid credentials");
@@ -49,7 +60,7 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Invalid credentials");
         }
 
-        return user;
+        return user as any;
       }
     })
   ],
@@ -64,10 +75,9 @@ export const authOptions: NextAuthOptions = {
         return session;
     },
     async jwt({ token, user, trigger, session }) {
-        // Handle initial sign-in and session updates
         if (user) {
             token.id = user.id;
-            token.role = user.role;
+            token.role = (user as any).role;
         }
 
         if (trigger === "update" && session) {
