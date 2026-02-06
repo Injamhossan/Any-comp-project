@@ -17,8 +17,8 @@ function ServicesContent() {
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          // Filter out unverified/drafts for consistency with home page
-          const published = data.data.filter((s: any) => !s.is_draft && s.verification_status === "VERIFIED");
+          // Filter out drafts, allow VERIFIED or PENDING
+          const published = data.data.filter((s: any) => !s.is_draft && (s.verification_status === "VERIFIED" || s.verification_status === "PENDING"));
           setServices(published);
         }
       })

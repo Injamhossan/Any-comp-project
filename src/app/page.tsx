@@ -51,8 +51,8 @@ function SpecialistsContent() {
             const res = await fetch('/api/specialists');
             const data = await res.json();
             if (data.success) {
-            // Filter out drafts and unverified services for public view
-            const published = data.data.filter((s: Specialist) => !s.is_draft && s.verification_status === "VERIFIED");
+            // Show services that are not drafts and are either VERIFIED or PENDING
+            const published = data.data.filter((s: Specialist) => !s.is_draft && (s.verification_status === "VERIFIED" || s.verification_status === "PENDING"));
             setSpecialists(published);
             }
         } catch (error) {

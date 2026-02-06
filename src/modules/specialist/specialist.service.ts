@@ -2,7 +2,7 @@
 import { getDb } from "@/lib/db";
 import { Specialist, VerificationStatus } from "@/entities/Specialist";
 import { Media, MediaType, MimeType } from "@/entities/Media";
-import { IsNull, DeepPartial } from "typeorm";
+import { IsNull, DeepPartial, In } from "typeorm";
 
 // Helper to construct media create input
 const prepareMediaCreate = (urls: string[], specialistId?: string) => {
@@ -48,8 +48,9 @@ export const getAllSpecialists = async (includeUnverified = false): Promise<Spec
   const whereClause: any = { deleted_at: IsNull() };
   
   if (!includeUnverified) {
-      whereClause.verification_status = VerificationStatus.VERIFIED;
+      // Show both Verified and Pending, but not Rejected or Drafts
       whereClause.is_draft = false;
+      whereClause.verification_status = In([VerificationStatus.VERIFIED, VerificationStatus.PENDING]);
   }
 
   return await db.getRepository(Specialist).find({
