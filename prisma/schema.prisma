@@ -80,6 +80,8 @@ model Specialist {
   avatar_url              String?
   certifications          String[]           @default([])
   additional_offerings    Json?
+  secretary_phone         String?
+  secretary_bio           String?            @db.Text
 
 
   duration_days           Int

@@ -5,7 +5,6 @@ import React, { useState, Suspense } from "react";
 import Image from "next/image";
 import { Upload, ChevronRight, X, Plus, Trash2, Check, User, Building, Zap, MapPin, CalendarCheck, Award, Truck, Headphones } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ImageUploadBox } from "@/components/ui/image-upload-box";
 import uploadIcon from "@/assets/image/upload.png";
 import stcImage from "@/assets/image/STC.png";
 import maicsaImage from "@/assets/certification/Maicsa.png";
@@ -46,6 +45,9 @@ function CreateSpecialistContent() {
         duration, setDuration,
         secretaryName, setSecretaryName,
         secretaryCompany, setSecretaryCompany,
+        secretaryPhone, setSecretaryPhone,
+        secretaryEmail, setSecretaryEmail,
+        secretaryBio, setSecretaryBio,
         avatar, setAvatar,
         companyLogo, setCompanyLogo,
         certifications, setCertifications,
@@ -130,6 +132,9 @@ function CreateSpecialistContent() {
                         setDuration(s.duration_days || 1);
                         setSecretaryName(s.secretary_name || "");
                         setSecretaryCompany(s.secretary_company || "");
+                        setSecretaryPhone(s.secretary_phone || "");
+                        setSecretaryEmail(s.secretary_email || "");
+                        setSecretaryBio(s.secretary_bio || "");
                         setCertifications(s.certifications || []);
 
                         if (s.avatar_url) {
@@ -171,30 +176,6 @@ function CreateSpecialistContent() {
                 .catch(err => {
                     console.error("Failed to fetch specialist", err);
                 });
-        } else {
-            // Pre-fill for NEW service using Admin profile
-            // Try to fetch session to get email? For now, we try to guess or use a standard endpoint if available.
-            // Since this is client component, we should really use useSession, but we can also just fetch /api/auth/session or assume backend handler.
-            // Let's try fetching the profile if we can.
-            fetch('/api/auth/session').then(res => res.json()).then(session => {
-                if (session && session.user && session.user.email) {
-                     fetch(`/api/user/profile?email=${session.user.email}`)
-                        .then(res => res.json())
-                        .then(profile => {
-                            if (profile.success && profile.data) {
-                                const p = profile.data;
-                                setSecretaryName(p.name || "");
-                                setSecretaryCompany(p.company_name || "");
-                                if (p.image) {
-                                    setAvatar({ url: p.image, file_name: "profile", mime_type: "image/jpeg", file_size: 0 });
-                                }
-                                if (p.company_logo_url) {
-                                     setCompanyLogo({ url: p.company_logo_url, file_name: "logo", mime_type: "image/png", file_size: 0 });
-                                }
-                            }
-                        });
-                }
-            }).catch(() => {});
         }
     }, [editId]);
 
@@ -368,6 +349,9 @@ function CreateSpecialistContent() {
                 slug: (title || "service").toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now(),
                 secretary_name: secretaryName,
                 secretary_company: secretaryCompany,
+                secretary_phone: secretaryPhone,
+                secretary_email: secretaryEmail,
+                secretary_bio: secretaryBio,
                 avatar_url: avatar?.url || "",
                 secretary_company_logo: companyLogo?.url || "",
                 certifications: certifications,
@@ -582,11 +566,13 @@ function CreateSpecialistContent() {
                         </div>
 
                         <div className="grid grid-cols-2 gap-8 text-xs text-gray-500">
-                            <div className="space-y-4">
-                                <p>
-                                    A company secretary service founded by John, who believes that every company deserves clarity, confidence, and care in their compliance journey.
+                                <p className="whitespace-pre-wrap">
+                                    {secretaryBio || "A company secretary service founded by John, who believes that every company deserves clarity, confidence, and care in their compliance journey."}
                                 </p>
-                            </div>
+                                <div className="pt-2 flex flex-col gap-1">
+                                    {secretaryEmail && <div className="flex items-center gap-2"><span className="text-xs font-bold text-gray-700">EMAIL:</span> <span>{secretaryEmail}</span></div>}
+                                    {secretaryPhone && <div className="flex items-center gap-2"><span className="text-xs font-bold text-gray-700">PHONE:</span> <span>{secretaryPhone}</span></div>}
+                                </div>
                             <div className="space-y-4">
                                 <div>
                                     <h5 className="font-bold text-gray-900 mb-1">Firm</h5>
@@ -785,6 +771,29 @@ function CreateSpecialistContent() {
                                     placeholder="Company Name"
                                     className="w-full text-xs text-black placeholder:text-gray-400 border-gray-200 rounded-md focus:border-black focus:ring-0"
                                 />
+                                <div className="grid grid-cols-2 gap-2">
+                                    <input
+                                        type="email"
+                                        value={secretaryEmail}
+                                        onChange={(e) => setSecretaryEmail(e.target.value)}
+                                        placeholder="Email Address"
+                                        className="w-full text-xs text-black placeholder:text-gray-400 border-gray-200 rounded-md focus:border-black focus:ring-0"
+                                    />
+                                    <input
+                                        type="tel"
+                                        value={secretaryPhone}
+                                        onChange={(e) => setSecretaryPhone(e.target.value)}
+                                        placeholder="Phone Number"
+                                        className="w-full text-xs text-black placeholder:text-gray-400 border-gray-200 rounded-md focus:border-black focus:ring-0"
+                                    />
+                                </div>
+                                <textarea
+                                    value={secretaryBio}
+                                    onChange={(e) => setSecretaryBio(e.target.value)}
+                                    placeholder="Secretary Bio / About Section"
+                                    rows={4}
+                                    className="w-full text-xs text-black placeholder:text-gray-400 border-gray-200 rounded-md focus:border-black focus:ring-0 resize-none"
+                                />
                             </div>
                         </div>
                     </div>
@@ -858,54 +867,6 @@ function CreateSpecialistContent() {
                             </div>
                         </div>
 
-                        {/* Image Grid */}
-                        <div className="grid grid-cols-2 gap-4 auto-rows-[200px]">
-                            <div className="col-span-2 row-span-2 h-full">
-                                {/* Large Main Image */}
-                                <ImageUploadBox
-                                    image={images[0]?.url}
-                                    onUpload={(url) => {
-                                        updateImage(0, { url, file_name: "image_1", mime_type: "image/jpeg", file_size: 0 });
-                                    }}
-                                    onDelete={() => {
-                                        updateImage(0, null);
-                                    }}
-                                    label="Main Service Image"
-                                    height="h-full"
-                                    className="h-full"
-                                />
-                            </div>
-                            <div className="col-span-1 row-span-1">
-                                {/* Secondary Image 1 */}
-                                <ImageUploadBox
-                                    image={images[1]?.url}
-                                    onUpload={(url) => {
-                                        updateImage(1, { url, file_name: "image_2", mime_type: "image/jpeg", file_size: 0 });
-                                    }}
-                                    onDelete={() => {
-                                        updateImage(1, null);
-                                    }}
-                                    label="Side View 1"
-                                    height="h-full"
-                                    className="h-full"
-                                />
-                            </div>
-                            <div className="col-span-1 row-span-1">
-                                {/* Secondary Image 2 */}
-                                <ImageUploadBox
-                                    image={images[2]?.url}
-                                    onUpload={(url) => {
-                                        updateImage(2, { url, file_name: "image_3", mime_type: "image/jpeg", file_size: 0 });
-                                    }}
-                                    onDelete={() => {
-                                        updateImage(2, null);
-                                    }}
-                                    label="Side View 2"
-                                    height="h-full"
-                                    className="h-full"
-                                />
-                            </div>
-                        </div>
 
                         {/* Pricing Inputs for Selected Offerings */}
                         {offerings.length > 0 && (

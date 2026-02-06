@@ -20,6 +20,9 @@ interface ServiceState {
     duration: number | string;
     secretaryName: string;
     secretaryCompany: string;
+    secretaryPhone: string;
+    secretaryEmail: string;
+    secretaryBio: string;
     avatar: UploadedImage | null;
     companyLogo: UploadedImage | null;
     certifications: string[];
@@ -33,6 +36,9 @@ interface ServiceState {
     setDuration: (duration: number | string) => void;
     setSecretaryName: (name: string) => void;
     setSecretaryCompany: (company: string) => void;
+    setSecretaryPhone: (phone: string) => void;
+    setSecretaryEmail: (email: string) => void;
+    setSecretaryBio: (bio: string) => void;
     setAvatar: (avatar: UploadedImage | null) => void;
     setCompanyLogo: (logo: UploadedImage | null) => void;
     setCertifications: (certifications: string[]) => void;
@@ -53,6 +59,9 @@ const initialState = {
     duration: 1,
     secretaryName: "",
     secretaryCompany: "",
+    secretaryPhone: "",
+    secretaryEmail: "",
+    secretaryBio: "",
     avatar: null,
     companyLogo: null,
     certifications: [],
@@ -70,6 +79,9 @@ export const useServiceStore = create<ServiceState>((set) => ({
     setDuration: (duration) => set({ duration }),
     setSecretaryName: (secretaryName) => set({ secretaryName }),
     setSecretaryCompany: (secretaryCompany) => set({ secretaryCompany }),
+    setSecretaryPhone: (secretaryPhone) => set({ secretaryPhone }),
+    setSecretaryEmail: (secretaryEmail) => set({ secretaryEmail }),
+    setSecretaryBio: (secretaryBio) => set({ secretaryBio }),
     setAvatar: (avatar) => set({ avatar }),
     setCompanyLogo: (companyLogo) => set({ companyLogo }),
     setCertifications: (certifications) => set({ certifications }),

@@ -46,14 +46,28 @@ export const getAllSpecialists = async (includeUnverified = false): Promise<Spec
 export const getSpecialistById = async (id: string): Promise<Specialist | null> => {
   return await prisma.specialist.findUnique({
     where: { id },
-    include: { media: true, service_offerings: true },
+    include: { 
+      media: true, 
+      service_offerings: {
+        include: {
+          master_list_item: true
+        }
+      } 
+    },
   });
 };
 
 export const getSpecialistBySlug = async (slug: string): Promise<Specialist | null> => {
   return await prisma.specialist.findUnique({
     where: { slug },
-    include: { media: true, service_offerings: true },
+    include: { 
+      media: true, 
+      service_offerings: {
+        include: {
+          master_list_item: true
+        }
+      } 
+    },
   });
 };
 
@@ -62,7 +76,14 @@ export const getSpecialistByOwner = async (email: string, name?: string): Promis
    if (email) {
        const byEmail = await prisma.specialist.findFirst({
            where: { secretary_email: email, deleted_at: null },
-           include: { media: true }
+           include: { 
+             media: true,
+             service_offerings: {
+               include: {
+                 master_list_item: true
+               }
+             }
+           }
        });
        if (byEmail) return byEmail;
    }
@@ -71,7 +92,14 @@ export const getSpecialistByOwner = async (email: string, name?: string): Promis
    if (name) {
        const byName = await prisma.specialist.findFirst({
            where: { secretary_name: name, deleted_at: null },
-           include: { media: true }
+           include: { 
+             media: true,
+             service_offerings: {
+               include: {
+                 master_list_item: true
+               }
+             }
+           }
        });
        if (byName) return byName;
    }

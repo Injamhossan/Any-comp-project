@@ -92,6 +92,76 @@ async function main() {
   })
 
 
+
+  // 8. Create Service Offering Master List
+  const offeringsData = [
+      {
+          title: "Company Secretary Subscription",
+          description: "Enjoy 1 month free Company Secretary Subscription",
+          s3_key: "user-check",
+          bucket_name: "anycomp-assets"
+      },
+      {
+          title: "Opening of a Bank Account",
+          description: "Complimentary Corporate Bank Account Opening",
+          s3_key: "landmark",
+          bucket_name: "anycomp-assets"
+      },
+      {
+          title: "Access Company Records and SSM Forms",
+          description: "24/7 Secure Access to Statutory Company Records",
+          s3_key: "files",
+          bucket_name: "anycomp-assets"
+      },
+      {
+          title: "Priority Filling",
+          description: "Documents are prioritized for submission and swift processing - within 24 hours",
+          s3_key: "zap",
+          bucket_name: "anycomp-assets"
+      },
+      {
+          title: "Registered Office Address Use",
+          description: "Use of SSM-Compliant Registered Office Address with Optional Mail Forwarding",
+          s3_key: "map-pin",
+          bucket_name: "anycomp-assets"
+      },
+      {
+          title: "Compliance Calendar Setup",
+          description: "Get automated reminders for all statutory deadlines",
+          s3_key: "calendar-check",
+          bucket_name: "anycomp-assets"
+      },
+      {
+          title: "First Share Certificate Issued Free",
+          description: "Receive your company's first official share certificate at no cost",
+          s3_key: "award",
+          bucket_name: "anycomp-assets"
+      },
+      {
+          title: "CTC Delivery & Courier Handling",
+          description: "Have your company documents and certified copies delivered securely to you",
+          s3_key: "truck",
+          bucket_name: "anycomp-assets"
+      },
+      {
+          title: "Chat Support",
+          description: "Always-On Chat Support for Compliance, Filing, and General Queries",
+          s3_key: "headphones",
+          bucket_name: "anycomp-assets"
+      }
+  ];
+
+  for (const offering of offeringsData) {
+      const exists = await prisma.serviceOfferingMasterList.findFirst({
+          where: { title: offering.title }
+      });
+      if (!exists) {
+          await prisma.serviceOfferingMasterList.create({
+              data: offering
+          });
+      }
+  }
+
   console.log('Seeding finished.')
 }
 
