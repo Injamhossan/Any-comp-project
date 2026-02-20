@@ -1,14 +1,11 @@
-
 import { NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
-import { Invoice } from "@/entities/Invoice";
+import prisma from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const db = await getDb();
-    const invoices = await db.getRepository(Invoice).find({
-      relations: ["user"],
-      order: { createdAt: 'DESC' }
+    const invoices = await prisma.invoice.findMany({
+      include: { user: true },
+      orderBy: { createdAt: 'desc' }
     });
     return NextResponse.json({ success: true, data: invoices });
   } catch (error) {

@@ -26,9 +26,9 @@ interface Specialist {
   duration_days: number;
   is_draft: boolean;
   created_at: string;
-  verification_status?: string; // Added field
+  verification_status?: string;   
   is_verified?: boolean;
-  purchases?: number;
+  purchase_count?: number;
   media?: { url: string }[];
 }
 
@@ -38,7 +38,6 @@ export default function ServicesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [openActionId, setOpenActionId] = useState<string | null>(null);
   const [specialists, setSpecialists] = useState<Specialist[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loading, setLoading] = useState(true);
 
   const tabs = ["All", "Pending Approval", "Published", "Drafts"];
@@ -329,7 +328,7 @@ export default function ServicesPage() {
                   RM {Number(specialist.final_price || 0).toLocaleString()}
                 </td>
                 <td className="py-4 px-3 text-sm text-gray-600 text-center">
-                  {specialist.purchases ?? 0}
+                  {specialist.purchase_count ?? 0}
                 </td>
                 <td className="py-4 px-3 text-sm text-gray-600 text-center whitespace-nowrap">
                   {specialist.duration_days} Days

@@ -1,8 +1,5 @@
-
-import { getDb } from "@/lib/db";
-import { ServiceOfferingMasterList } from "@/entities/ServiceOfferingMasterList";
+import prisma from "@/lib/prisma";
 
 export const getMasterList = async () => {
-  const db = await getDb();
-  return await db.getRepository(ServiceOfferingMasterList).find();
+  return await prisma.serviceOfferingMasterList.findMany();
 };

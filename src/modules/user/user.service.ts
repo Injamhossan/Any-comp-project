@@ -1,18 +1,16 @@
-
-import { getDb } from "@/lib/db";
-import { User } from "@/entities/User";
+import prisma from "@/lib/prisma";
 
 export const getUserByEmail = async (email: string) => {
-  const db = await getDb();
-  const user = await db.getRepository(User).findOne({
+  const user = await prisma.user.findUnique({
     where: { email },
-    relations: ["registrations"],
+    include: {
+      registrations: {
+        orderBy: { createdAt: 'desc' }
+      }
+    },
   });
 
   if (user && user.registrations) {
-      // Sort registrations by createdAt desc manually if not using query builder
-      user.registrations.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-      
       if (!user.company_name && user.registrations.length > 0) {
           (user as any).company_name = user.registrations[0].companyName;
           (user as any).company_logo_url = user.registrations[0].companyLogoUrl;
@@ -23,9 +21,7 @@ export const getUserByEmail = async (email: string) => {
 };
 
 export const updateUserProfile = async (email: string, data: any) => {
-  const db = await getDb();
-  const repo = db.getRepository(User);
-  const user = await repo.findOne({ where: { email } });
+  const user = await prisma.user.findUnique({ where: { email } });
   
   if (!user) throw new Error("User not found");
 
@@ -42,6 +38,8 @@ export const updateUserProfile = async (email: string, data: any) => {
       firm_description: data.firm_description
   };
 
-  await repo.update({ email }, updateData);
-  return await repo.findOne({ where: { email } });
+  return await prisma.user.update({
+    where: { email },
+    data: updateData
+  });
 };

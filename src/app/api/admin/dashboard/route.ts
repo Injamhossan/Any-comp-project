@@ -1,48 +1,43 @@
-
 import { NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
-import { Message } from "@/entities/Message";
-import { Invoice, InvoiceStatus } from "@/entities/Invoice";
-import { Document } from "@/entities/Document";
-import { Order } from "@/entities/Order";
-import { User, UserRole } from "@/entities/User";
+import prisma from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const db = await getDb();
-    
     const [messages, invoices, documents, ordersCount, clientsCount, recentOrders] = await Promise.all([
-      db.getRepository(Message).find({ 
+      prisma.message.findMany({ 
           take: 5, 
-          order: { createdAt: 'DESC' } 
+          orderBy: { createdAt: 'desc' } 
       }),
-      db.getRepository(Invoice).find({ 
+      prisma.invoice.findMany({ 
           take: 5, 
-          order: { createdAt: 'DESC' },
-          relations: ["user"]
+          orderBy: { createdAt: 'desc' },
+          include: { user: true }
       }),
-      db.getRepository(Document).find({
+      prisma.document.findMany({
           take: 5,
-          order: { createdAt: 'DESC' },
-          relations: ["user"]
+          orderBy: { createdAt: 'desc' },
+          include: { user: true }
       }),
-      db.getRepository(Order).count(),
-      db.getRepository(User).count({ where: { role: UserRole.USER } }),
-      db.getRepository(Order).find({
+      prisma.order.count(),
+      prisma.user.count({ where: { role: 'USER' } }),
+      prisma.order.findMany({
         take: 5,
-        order: { createdAt: 'DESC' },
-        relations: ["user", "specialist"]
+        orderBy: { createdAt: 'desc' },
+        include: { user: true, specialist: true }
       })
     ]);
     
     // Calculate total revenue
-    const revenueResult = await db.getRepository(Invoice)
-        .createQueryBuilder("invoice")
-        .select("SUM(invoice.amount)", "sum")
-        .where("invoice.status = :status", { status: InvoiceStatus.PAID })
-        .getRawOne();
+    const revenueResult = await prisma.invoice.aggregate({
+        _sum: {
+            amount: true
+        },
+        where: {
+            status: 'PAID'
+        }
+    });
         
-    const totalRevenue = parseFloat(revenueResult?.sum || "0");
+    const totalRevenue = Number(revenueResult._sum.amount || 0);
 
     const stats = {
         totalClients: clientsCount,

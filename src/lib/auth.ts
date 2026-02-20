@@ -1,22 +1,12 @@
-
-import { TypeORMAdapter } from "@auth/typeorm-adapter"
-import { NextAuthOptions } from "next-auth"
+import { NextAuthOptions, User as AuthUser } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
-import { getDb } from "@/lib/db"
-import { User } from "@/entities/User"
-import { Account } from "@/entities/Account"
-import { Session } from "@/entities/Session"
-import { VerificationToken } from "@/entities/VerificationToken"
+import { PrismaAdapter } from "@next-auth/prisma-adapter"
+import prisma from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 
 export const authOptions: NextAuthOptions = {
-  adapter: TypeORMAdapter({
-    type: "postgres",
-    url: process.env.DATABASE_URL,
-    entities: [User, Account, Session, VerificationToken],
-    synchronize: false,
-  }),
+  adapter: PrismaAdapter(prisma),
   session: {
     strategy: "jwt"
   },
@@ -34,15 +24,12 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials) {
+      async authorize(credentials): Promise<AuthUser | null> {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Invalid credentials");
         }
 
-        const db = await getDb();
-        const userRepository = db.getRepository(User);
-
-        const user = await userRepository.findOne({
+        const user = await prisma.user.findUnique({
           where: {
             email: credentials.email
           }
@@ -58,10 +45,11 @@ export const authOptions: NextAuthOptions = {
         );
 
         if (!isCorrectPassword) {
-            throw new Error("Invalid credentials");
+          throw new Error("Invalid credentials");
         }
 
-        return user as any;
+        // Return the user in a type-safe way compatible with NextAuth
+        return user as AuthUser;
       }
     })
   ],
@@ -76,16 +64,18 @@ export const authOptions: NextAuthOptions = {
         return session;
     },
     async jwt({ token, user, trigger, session }) {
-        if (user) {
-            token.id = user.id;
-            token.role = (user as any).role;
+      if (user) {
+        token.id = user.id;
+        if ("role" in user) {
+          token.role = (user as { role?: string }).role;
         }
+      }
 
-        if (trigger === "update" && session) {
-            token = { ...token, ...session }
-        }
+      if (trigger === "update" && session) {
+        token = { ...token, ...session }
+      }
 
-        return token;
+      return token;
     }
   }
 }

@@ -1,7 +1,5 @@
-
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
-import { Order, OrderStatus } from "@/entities/Order";
+import prisma from "@/lib/prisma";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -13,15 +11,33 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         return NextResponse.json({ success: false, message: "Missing ID or Status" }, { status: 400 });
     }
 
-    if (!Object.values(OrderStatus).includes(status as OrderStatus)) {
-         return NextResponse.json({ success: false, message: "Invalid Status" }, { status: 400 });
-    }
+    const updatedOrder = await prisma.$transaction(async (tx) => {
+        const orderBefore = await tx.order.findUnique({
+            where: { id },
+            select: { status: true, specialistId: true }
+        });
 
-    const db = await getDb();
-    const repo = db.getRepository(Order);
-    
-    await repo.update(id, { status: status as OrderStatus });
-    const updatedOrder = await repo.findOne({ where: { id } });
+        if (!orderBefore) throw new Error("Order not found");
+
+        const updated = await tx.order.update({
+            where: { id },
+            data: { status }
+        });
+
+        // Increment purchase_count ONLY if status is changing TO 'PAID' from something else
+        if (status === 'PAID' && orderBefore.status !== 'PAID') {
+            await tx.specialist.update({
+                where: { id: orderBefore.specialistId },
+                data: {
+                    purchase_count: {
+                        increment: 1
+                    }
+                }
+            });
+        }
+
+        return updated;
+    });
 
     return NextResponse.json({ success: true, data: updatedOrder });
   } catch (error: any) {
@@ -37,15 +53,14 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
         return NextResponse.json({ success: false, message: "Missing ID" }, { status: 400 });
     }
 
-    const db = await getDb();
-    const repo = db.getRepository(Order);
-    
-    const order = await repo.findOne({ where: { id } });
+    const order = await prisma.order.findUnique({ where: { id } });
     if (!order) {
         return NextResponse.json({ success: false, message: "Order not found" }, { status: 404 });
     }
 
-    await repo.remove(order);
+    await prisma.order.delete({
+        where: { id }
+    });
 
     return NextResponse.json({ success: true, message: "Order deleted successfully" });
   } catch (error: any) {

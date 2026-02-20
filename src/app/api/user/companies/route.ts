@@ -1,8 +1,5 @@
-
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
-import { User, UserRole } from "@/entities/User";
-import { CompanyRegistration, RegistrationStatus } from "@/entities/CompanyRegistration";
+import prisma from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
   try {
@@ -14,21 +11,20 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Email required" }, { status: 400 });
     }
 
-    const db = await getDb();
-    const userRepo = db.getRepository(User);
-
-    let user = await userRepo.findOne({
+    let user = await prisma.user.findUnique({
       where: { email },
-      relations: ["registrations"]
+      include: { registrations: true }
     });
 
     if (!user) {
-       user = userRepo.create({ 
-            email,
-            name: name || email.split('@')[0],
-            role: UserRole.USER
+       user = await prisma.user.create({
+            data: {
+                email,
+                name: name || email.split('@')[0],
+                role: 'USER'
+            },
+            include: { registrations: true }
        });
-       await userRepo.save(user);
        return NextResponse.json({ success: true, data: [] });
     }
 
@@ -49,18 +45,16 @@ export async function POST(req: NextRequest) {
            return NextResponse.json({ success: false, message: "Missing fields" }, { status: 400 });
       }
 
-      const db = await getDb();
-      const userRepo = db.getRepository(User);
-      const regRepo = db.getRepository(CompanyRegistration);
-      
-      let user = await userRepo.findOne({ 
+      let user = await prisma.user.findUnique({ 
           where: { email },
-          relations: ["registrations"]
+          include: { registrations: true }
       });
       
       if (!user) {
-          user = userRepo.create({ email, role: UserRole.USER });
-          await userRepo.save(user);
+          user = await prisma.user.create({
+               data: { email, role: 'USER' },
+               include: { registrations: true }
+          });
       }
 
       if (user.registrations && user.registrations.length > 0) {
@@ -70,20 +64,23 @@ export async function POST(req: NextRequest) {
           }, { status: 400 });
       }
 
-      const registration = regRepo.create({
-          userId: user.id,
-          companyName,
-          companyType,
-          companyLogoUrl, 
-          status: RegistrationStatus.PENDING
+      const registration = await prisma.companyRegistration.create({
+          data: {
+              userId: user.id,
+              companyName,
+              companyType,
+              companyLogoUrl, 
+              status: 'PENDING'
+          }
       });
       
-      await regRepo.save(registration);
-
       // Update User Profile with company info for easier access
-      await userRepo.update(user.id, {
-          company_name: companyName,
-          company_logo_url: companyLogoUrl
+      await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            company_name: companyName,
+            company_logo_url: companyLogoUrl
+          }
       });
 
       return NextResponse.json({ success: true, data: registration });

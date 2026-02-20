@@ -3,7 +3,7 @@
 import { toast } from "sonner";
 import React, { useState, Suspense } from "react";
 import Image from "next/image";
-import { Upload, ChevronRight, X, Plus, Trash2, Check, User, Building, Zap, MapPin, CalendarCheck, Award, Truck, Headphones } from "lucide-react";
+import { Upload, ChevronRight, X, Plus, Trash2, Check, User, Building, Zap, MapPin, CalendarCheck, Award, Truck, Headphones, AlertCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import uploadIcon from "@/assets/image/upload.png";
 import stcImage from "@/assets/image/STC.png";
@@ -79,6 +79,7 @@ function CreateSpecialistContent() {
     const [dragActive, setDragActive] = useState<number | null>(null);
 
     const [showAssetModal, setShowAssetModal] = useState(false);
+    const [showPublishModal, setShowPublishModal] = useState(false);
     const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null);
 
 
@@ -449,6 +450,45 @@ function CreateSpecialistContent() {
                 </div>
             )}
 
+            {/* PUBLISH CONFIRMATION MODAL */}
+            {showPublishModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="p-8">
+                            <div className="flex items-start gap-4">
+                                <div className="bg-[#0e2a6d] rounded-full p-2 flex-shrink-0">
+                                    <AlertCircle className="h-6 w-6 text-white" />
+                                </div>
+                                <div className="space-y-1">
+                                    <h3 className="text-2xl font-bold text-gray-900">Publish changes</h3>
+                                    <p className="text-gray-500 text-sm leading-relaxed">
+                                        Do you want to publish these changes? It will appear in the marketplace listing
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div className="mt-8 flex items-center justify-end gap-3">
+                                <button 
+                                    onClick={() => setShowPublishModal(false)}
+                                    className="px-6 py-2.5 border border-gray-300 text-gray-700 text-sm font-bold rounded-xl hover:bg-gray-50 transition-colors"
+                                >
+                                    Continue Editing
+                                </button>
+                                <button 
+                                    onClick={async () => {
+                                        setShowPublishModal(false);
+                                        await submitToBackend(false);
+                                    }}
+                                    className="px-6 py-2.5 bg-[#0e2a6d] text-white text-sm font-bold rounded-xl hover:bg-[#002f70] transition-all shadow-lg shadow-blue-900/20"
+                                >
+                                    Save changes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* LEFT SIDE: PREVIEW */}
             <div className="flex-1 p-8 overflow-y-auto">
                 <div className="max-w-4xl mx-auto space-y-12 pb-20">
@@ -626,7 +666,10 @@ function CreateSpecialistContent() {
                             {isSubmitting ? "Saving..." : "Draft"}
                         </button>
                         <button
-                            onClick={() => submitToBackend(false)}
+                            onClick={() => {
+                                if (editId) setShowPublishModal(true);
+                                else submitToBackend(false);
+                            }}
                             disabled={isSubmitting || uploading.some(u => u)}
                             className="px-3 py-1.5 bg-[#0e2a6d] text-white text-xs font-semibold rounded-lg hover:bg-[#002f70] disabled:opacity-50 transition-colors"
                         >

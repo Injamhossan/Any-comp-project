@@ -1,6 +1,4 @@
-
-import { getDb } from "@/lib/db";
-import { User, UserRole } from "@/entities/User";
+import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 
@@ -12,10 +10,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Missing email or password" }, { status: 400 });
     }
 
-    const db = await getDb();
-    const userRepository = db.getRepository(User);
-
-    const exists = await userRepository.findOne({
+    const exists = await prisma.user.findUnique({
       where: { email }
     });
 
@@ -25,14 +20,14 @@ export async function POST(req: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = userRepository.create({
-      name,
-      email,
-      password: hashedPassword,
-      role: UserRole.USER
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role: 'USER'
+      }
     });
-
-    await userRepository.save(user);
 
     return NextResponse.json({ 
         success: true,

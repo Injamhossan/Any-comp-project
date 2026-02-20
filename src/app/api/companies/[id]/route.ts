@@ -1,7 +1,5 @@
-
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
-import { CompanyRegistration } from "@/entities/CompanyRegistration";
+import prisma from "@/lib/prisma";
 
 export async function GET(
   req: NextRequest,
@@ -9,9 +7,8 @@ export async function GET(
 ) {
   try {
      const { id } = await params;
-     const db = await getDb();
      
-     const company = await db.getRepository(CompanyRegistration).findOne({
+     const company = await prisma.companyRegistration.findUnique({
          where: { id }
      });
 
@@ -35,20 +32,18 @@ export async function PUT(
         const body = await req.json();
         const { companyName, companyType, companyLogoUrl } = body;
 
-        const db = await getDb();
-        const repo = db.getRepository(CompanyRegistration);
-
         if (!companyName) {
             return NextResponse.json({ success: false, message: "Company name is required" }, { status: 400 });
         }
 
-        await repo.update(id, {
-            companyName,
-            companyType,
-            companyLogoUrl
+        const updated = await prisma.companyRegistration.update({
+            where: { id },
+            data: {
+              companyName,
+              companyType,
+              companyLogoUrl
+            }
         });
-        
-        const updated = await repo.findOne({ where: { id } });
 
         return NextResponse.json({ success: true, data: updated });
 

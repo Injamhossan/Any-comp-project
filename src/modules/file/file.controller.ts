@@ -1,7 +1,5 @@
-
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
-import { FileEntity } from "@/entities/File";
+import prisma from "@/lib/prisma";
 
 export const uploadFile = async (req: NextRequest) => {
   try {
@@ -20,18 +18,15 @@ export const uploadFile = async (req: NextRequest) => {
     const sanitizedFilename = fileObject.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9.\-_]/g, '');
     const filename = `${Date.now()}_${sanitizedFilename}`;
 
-    const db = await getDb();
-    const fileRepo = db.getRepository(FileEntity);
-
     // Store in DB
-    const savedFile = fileRepo.create({
-        filename: filename,
-        mimeType: fileObject.type,
-        data: buffer,
-        size: fileObject.size
+    const savedFile = await prisma.file.create({
+        data: {
+          filename: filename,
+          mimeType: fileObject.type,
+          data: buffer,
+          size: fileObject.size
+        }
     });
-    
-    await fileRepo.save(savedFile);
     
     // The public URL for the file to be served via API
     const downloadURL = `/api/files/${savedFile.id}`;

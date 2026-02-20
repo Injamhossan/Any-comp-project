@@ -1,8 +1,5 @@
-
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
-import { Order, OrderStatus } from "@/entities/Order";
-import { Specialist } from "@/entities/Specialist";
+import prisma from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,24 +30,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const db = await getDb();
-    const order = await db.manager.transaction(async (transactionalEntityManager) => {
-      const newOrder = transactionalEntityManager.create(Order, {
+    const order = await prisma.order.create({
+        data: {
           specialistId,
           userId: userId || null,
           amount,
-          status: OrderStatus.PENDING,
+          status: 'PENDING',
           customerName,
           customerEmail,
           customerPhone,
           requirements,
-      });
-      
-      const savedOrder = await transactionalEntityManager.save(newOrder);
-
-      await transactionalEntityManager.increment(Specialist, { id: specialistId }, "purchase_count", 1);
-
-      return savedOrder;
+        }
     });
 
     return NextResponse.json({ success: true, data: order }, { status: 201 });
@@ -75,15 +65,17 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const db = await getDb();
     const whereClause: any = {};
     if (userId) whereClause.userId = userId;
     if (specialistId) whereClause.specialistId = specialistId;
 
-    const orders = await db.getRepository(Order).find({
+    const orders = await prisma.order.findMany({
       where: whereClause,
-      relations: ["specialist", "user"],
-      order: { createdAt: "DESC" },
+      include: {
+        specialist: true,
+        user: true,
+      },
+      orderBy: { createdAt: "desc" },
     });
 
     return NextResponse.json({ success: true, data: orders }, { status: 200 });
